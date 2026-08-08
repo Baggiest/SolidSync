@@ -178,12 +178,12 @@ export class SyncService {
     await this.act(() => this.api.createSection(projectId, name))
   }
 
-  async throwIn(opts: { projectId: string; sectionId: string; filePath: string; parentId?: string | null }): Promise<void> {
-    await this.act(() => this.api.uploadNew(opts))
+  async throwIn(opts: { projectId: string; sectionId: string; filePath: string; parentId?: string | null }, onProgress?: (sent: number, total: number) => void): Promise<void> {
+    await this.act(() => this.api.uploadNew(opts, onProgress))
   }
 
-  async saveVersion(opts: { projectId: string; partId: string; filePath: string }): Promise<void> {
-    await this.act(() => this.api.saveVersion(opts))
+  async saveVersion(opts: { projectId: string; partId: string; filePath: string }, onProgress?: (sent: number, total: number) => void): Promise<void> {
+    await this.act(() => this.api.saveVersion(opts, onProgress))
   }
 
   async setWorkStatus(partId: string, status: Parameters<SolidSyncApi['setWorkStatus']>[1]): Promise<void> {

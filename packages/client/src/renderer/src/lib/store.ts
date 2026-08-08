@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { ClientState } from '@solidsync/shared'
+import type { ClientState, UploadProgress } from '@solidsync/shared'
 
 export const EMPTY_STATE: ClientState = {
   appConfig: { configured: false, name: '', serverIp: '', port: 1 },
@@ -35,10 +35,39 @@ export function useClientState(): ClientState {
   return useSyncExternalStore(subscribeClientState, getClientState)
 }
 
+let upload: UploadProgress | null = null
+const uploadListeners = new Set<() => void>()
+
+export function getUploadProgress(): UploadProgress | null {
+  return upload
+}
+
+function setUploadProgress(p: UploadProgress): void {
+  upload = p
+  for (const fn of uploadListeners) fn()
+}
+
+export function useUploadProgress(): UploadProgress | null {
+  return useSyncExternalStore(
+    (cb) => {
+      uploadListeners.add(cb)
+      return () => {
+        uploadListeners.delete(cb)
+      }
+    },
+    getUploadProgress
+  )
+}
+
 /** Wire the store to the preload bridge. Returns an unsubscribe fn. */
 export function initStore(): () => void {
   window.solidsync.getState().then(setClientState).catch(() => undefined)
-  return window.solidsync.subscribe(setClientState)
+  const offState = window.solidsync.subscribe(setClientState)
+  const offUpload = window.solidsync.onUploadProgress(setUploadProgress)
+  return () => {
+    offState()
+    offUpload()
+  }
 }
 
 /** Run an action; returns an error message or null. */

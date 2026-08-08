@@ -74,6 +74,14 @@ export interface MirrorFile {
   hash6: string
 }
 
+// Progress of an in-flight file upload from a client to the server.
+export interface UploadProgress {
+  fileName: string
+  sent: number
+  total: number
+  done: boolean
+}
+
 export interface ClientState {
   appConfig: AppConfig
   connection: ConnectionState

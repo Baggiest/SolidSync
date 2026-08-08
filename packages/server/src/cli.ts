@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import os from 'node:os'
 import path from 'node:path'
+import { realpathSync } from 'node:fs'
 import { runServe } from './commands/serve'
 import { runInit } from './commands/init'
 import { runHealth } from './commands/health'
@@ -132,13 +133,20 @@ export async function main(argv: string[]): Promise<number> {
   }
 }
 
-const isEntry =
-  typeof process !== 'undefined' &&
-  typeof process.argv[1] === 'string' &&
-  process.argv[1] &&
-  (typeof __filename === 'string'
-    ? path.resolve(__filename) === path.resolve(process.argv[1])
-    : import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`)
+const isEntry = ((): boolean => {
+  if (typeof process === 'undefined') return false
+  if (typeof process.argv[1] !== 'string' || process.argv[1] === '') return false
+  if (typeof __filename === 'string') {
+    try {
+      return (
+        path.resolve(realpathSync(__filename)) === path.resolve(realpathSync(process.argv[1]))
+      )
+    } catch {
+      return false
+    }
+  }
+  return import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`
+})()
 
 if (isEntry) {
   main(process.argv.slice(2)).then(

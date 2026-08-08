@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import path from 'node:path'
 import { ConfigStore } from './config'
 import { Session } from './session'
-import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
 import { DEFAULT_PORT } from '@solidsync/shared'
 
 const session = new Session()
@@ -37,6 +37,12 @@ function buildState(): ClientState {
 function pushState(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('app:state', buildState())
+  }
+}
+
+function pushUploadProgress(p: UploadProgress): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('app:upload', p)
   }
 }
 
@@ -125,15 +131,25 @@ ipcMain.handle('action:createSection', async (_e, projectId: string, name: strin
   pushState()
 })
 
+const uploadProgress = (fileName: string) => {
+  let last = 0
+  return (sent: number, total: number): void => {
+    const now = Date.now()
+    if (now - last < 100 && sent < total) return
+    last = now
+    pushUploadProgress({ fileName, sent, total, done: sent >= total })
+  }
+}
+
 ipcMain.handle('action:throwIn', async (_e, opts: { projectId: string; sectionId: string; filePath: string; parentId?: string | null }) => {
   const s = await requireOnline()
-  await s.sync!.throwIn(opts)
+  await s.sync!.throwIn(opts, uploadProgress(path.basename(opts.filePath)))
   pushState()
 })
 
 ipcMain.handle('action:saveVersion', async (_e, opts: { projectId: string; partId: string; filePath: string }) => {
   const s = await requireOnline()
-  await s.sync!.saveVersion(opts)
+  await s.sync!.saveVersion(opts, uploadProgress(path.basename(opts.filePath)))
   pushState()
 })
 

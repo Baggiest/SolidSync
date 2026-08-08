@@ -1,10 +1,11 @@
-import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 declare global {
   interface Window {
     solidsync: {
       getState: () => Promise<ClientState>
       subscribe: (cb: (state: ClientState) => void) => () => void
+      onUploadProgress: (cb: (p: UploadProgress) => void) => () => void
       saveOnboarding: (cfg: AppConfig) => Promise<unknown>
       createProject: (name: string) => Promise<unknown>
       startMyCopy: (projectId: string) => Promise<unknown>

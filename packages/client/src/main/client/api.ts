@@ -1,4 +1,7 @@
-import { readFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { randomBytes } from 'node:crypto'
+import { Readable } from 'node:stream'
 import path from 'node:path'
 import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
@@ -108,14 +111,52 @@ export class SolidSyncApi {
     }).then((r) => parse<void>(r))
   }
 
-  private async multipart(p: string, filePath: string, fields: Record<string, string>): Promise<ServerBody> {
-    const buf = await readFile(filePath)
-    const form = new FormData()
-    form.append('file', new Blob([new Uint8Array(buf)], { type: 'application/octet-stream' }), path.basename(filePath))
-    for (const [k, v] of Object.entries(fields)) form.append(k, v)
-    return fetch(this.url(p), { method: 'POST', headers: { 'X-User': this.user }, body: form }).then(
-      (r) => parse<ServerBody>(r)
+  private async multipart(
+    p: string,
+    filePath: string,
+    fields: Record<string, string>,
+    onProgress?: (sent: number, total: number) => void
+  ): Promise<ServerBody> {
+    const st = await stat(filePath)
+    const boundary = `----solidsync-${randomBytes(12).toString('hex')}`
+    const enc = new TextEncoder()
+
+    const list: Uint8Array[] = []
+    for (const [k, v] of Object.entries(fields)) {
+      list.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`))
+    }
+    const fileHeader = enc.encode(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${path.basename(filePath)}"\r\nContent-Type: application/octet-stream\r\n\r\n`
     )
+    const end = enc.encode(`\r\n--${boundary}--\r\n`)
+    const prefix = Buffer.concat(list)
+
+    const total = prefix.length + fileHeader.length + st.size + end.length
+    let sent = 0
+
+    const rs = Readable.from(
+      (async function* () {
+        yield prefix
+        yield fileHeader
+        const src = createReadStream(filePath, { highWaterMark: 256 * 1024 })
+        for await (const chunk of src) {
+          sent += chunk.length
+          onProgress?.(sent, total)
+          yield chunk
+        }
+        yield end
+      })()
+    )
+
+    return fetch(this.url(p), {
+      method: 'POST',
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'X-User': this.user
+      },
+      body: Readable.toWeb(rs),
+      duplex: 'half'
+    } as unknown as RequestInit).then((r) => parse<ServerBody>(r))
   }
 
   /** Throw a new file into a section. */
@@ -124,21 +165,22 @@ export class SolidSyncApi {
     sectionId: string
     filePath: string
     parentId?: string | null
-  }): Promise<{ partId: string; versionId: string }> {
+  }, onProgress?: (sent: number, total: number) => void): Promise<{ partId: string; versionId: string }> {
     const body = await this.multipart('/api/upload', opts.filePath, {
       projectId: opts.projectId,
       sectionId: opts.sectionId,
       parentId: opts.parentId ?? ''
-    })
+    }, onProgress)
     return { partId: body.partId ?? '', versionId: body.versionId ?? '' }
   }
 
   /** Save a new version of an existing part. */
-  async saveVersion(opts: { projectId: string; partId: string; filePath: string }): Promise<{ partId: string; versionId: string }> {
+  async saveVersion(opts: { projectId: string; partId: string; filePath: string }, onProgress?: (sent: number, total: number) => void): Promise<{ partId: string; versionId: string }> {
     const body = await this.multipart(
       `/api/projects/${opts.projectId}/parts/${opts.partId}/versions`,
       opts.filePath,
-      {}
+      {},
+      onProgress
     )
     return { partId: body.partId ?? '', versionId: body.versionId ?? '' }
   }

@@ -18,7 +18,7 @@ export default function PartDetail(props: {
 
   if (!part) {
     return (
-      <aside className="hidden w-80 shrink-0 flex-col border-l border-zinc-800 bg-zinc-950/60 p-4 lg:flex">
+      <aside className="flex w-80 shrink-0 flex-col border-l border-zinc-800 bg-zinc-950/60 p-4">
         <div className="text-xs leading-5 text-zinc-500">
           Pick a part to see its version history, work status, and head version.
         </div>
@@ -30,7 +30,7 @@ export default function PartDetail(props: {
   const versions = [...part.versions].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
 
   return (
-    <aside className="hidden w-80 shrink-0 flex-col overflow-hidden border-l border-zinc-800 bg-zinc-950/60 lg:flex">
+    <aside className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-zinc-800 bg-zinc-950/60">
       <div className="border-b border-zinc-800/70 px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <div>

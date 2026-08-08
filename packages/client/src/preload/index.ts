@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 const api = {
   // state
@@ -9,6 +9,15 @@ const api = {
     ipcRenderer.on('app:state', listener)
     return () => {
       ipcRenderer.removeListener('app:state', listener)
+    }
+  },
+
+  // upload progress
+  onUploadProgress: (cb: (p: UploadProgress) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, p: UploadProgress): void => cb(p)
+    ipcRenderer.on('app:upload', listener)
+    return () => {
+      ipcRenderer.removeListener('app:upload', listener)
     }
   },
 
