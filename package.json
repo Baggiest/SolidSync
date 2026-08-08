@@ -1,45 +1,23 @@
 {
   "name": "solidgit",
-  "version": "0.1.0",
-  "description": "Shop-floor part sync tool: an advanced file explorer (Org > Project > Section > Part) with version history and sync. No login, no git vocabulary, no PDM seat.",
-  "main": "./out/main/index.js",
+  "version": "0.2.0",
   "private": true,
-  "author": "Pyrobotics",
-  "license": "UNLICENSED",
+  "description": "Shop-floor part filer: one headless server, many Electron clients, on a local network.",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "start": "electron-vite preview",
-    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
-    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "dev": "npm run dev --workspace @solidgit/client",
+    "server": "npm run dev --workspace @solidgit/server",
+    "build": "npm run build --workspace @solidgit/client",
+    "build:server": "npm run build --workspace @solidgit/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "build:win": "electron-vite build && electron-builder --win",
-    "pack:win": "electron-vite build && electron-builder --win --dir"
-  },
-  "dependencies": {
-    "express": "^5.2.1",
-    "isomorphic-git": "^1.40.4",
-    "multer": "^2.2.0",
-    "sql.js": "^1.14.1"
+    "pack:win": "npm run pack:win --workspace @solidgit/client"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/express": "^5.0.3",
-    "@types/multer": "^2.0.0",
     "@types/node": "^22.0.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "@types/sql.js": "^1.4.11",
-    "@vitejs/plugin-react": "^5.1.4",
-    "electron": "^43.3.0",
-    "electron-builder": "^26.15.3",
-    "electron-vite": "^5.0.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^7.0.0",
     "vitest": "^4.1.10"
   }
 }

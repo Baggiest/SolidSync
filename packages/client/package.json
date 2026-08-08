@@ -1,0 +1,36 @@
+{
+  "name": "@solidgit/client",
+  "version": "0.2.0",
+  "private": true,
+  "description": "SolidGit GUI: browse the shop org, throw in files, keep your own copy.",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build:win": "electron-vite build && electron-builder --win",
+    "pack:win": "electron-vite build && electron-builder --win --dir"
+  },
+  "dependencies": {
+    "isomorphic-git": "^1.40.4"
+  },
+  "devDependencies": {
+    "@solidgit/shared": "*",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0"
+  }
+}
