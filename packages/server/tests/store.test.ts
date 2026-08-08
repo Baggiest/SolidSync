@@ -10,7 +10,7 @@ let tmp: string
 let store: OrgStore
 
 beforeAll(async () => {
-  tmp = await mkdtemp(path.join(os.tmpdir(), 'solidgit-test-'))
+  tmp = await mkdtemp(path.join(os.tmpdir(), 'solidsync-test-'))
   store = await OrgStore.open(tmp, 'Test Shop')
 })
 

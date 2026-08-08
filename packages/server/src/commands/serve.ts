@@ -10,7 +10,7 @@ export async function runServe(o: CommandOptions): Promise<number> {
   const server = await startHttp(createApp(store), o.port, o.host)
 
   const ips = lanIPs()
-  console.log(`SolidGit server "${store.getOrgName()}" (rev ${store.getRev()})`)
+  console.log(`SolidSync server "${store.getOrgName()}" (rev ${store.getRev()})`)
   console.log(`  org data : ${o.dir}`)
   console.log(`  listening: http://${server.host}:${server.port}`)
   console.log(`  tell everyone: http://${ips[0] ?? '127.0.0.1'}:${server.port}`)

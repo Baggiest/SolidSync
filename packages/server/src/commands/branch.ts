@@ -3,7 +3,7 @@ import type { CommandOptions } from '../cli'
 
 export async function runBranch(o: CommandOptions, projectName?: string, newName?: string): Promise<number> {
   if (!projectName) {
-    console.error('usage: solidgit-server branch PROJECTNAME [NEWNAME] [--url URL]')
+    console.error('usage: solidsync-server branch PROJECTNAME [NEWNAME] [--url URL]')
     return 1
   }
   const client = new ServerClient(o.url, o.user)

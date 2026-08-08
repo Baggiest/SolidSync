@@ -1,5 +1,5 @@
 {
-  "name": "solidgit",
+  "name": "solidsync",
   "version": "0.2.0",
   "private": true,
   "description": "Shop-floor part filer: one headless server, many Electron clients, on a local network.",
@@ -7,13 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @solidgit/client",
-    "server": "npm run dev --workspace @solidgit/server",
-    "build": "npm run build --workspace @solidgit/client",
-    "build:server": "npm run build --workspace @solidgit/server",
+    "dev": "npm run dev --workspace @solidsync/client",
+    "server": "npm run dev --workspace @solidsync/server",
+    "build": "npm run build --workspace @solidsync/client",
+    "build:server": "npm run build --workspace @solidsync/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "pack:win": "npm run pack:win --workspace @solidgit/client"
+    "pack:win": "npm run pack:win --workspace @solidsync/client"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

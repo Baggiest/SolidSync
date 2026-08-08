@@ -1,7 +1,7 @@
 import path from 'node:path'
-import { SolidGitApi } from './api'
+import { SolidSyncApi } from './api'
 import { Mirror, type DesiredFile } from './mirror'
-import type { ConnectionState, Health, OrgSnapshot, SyncState } from '@solidgit/shared'
+import type { ConnectionState, Health, OrgSnapshot, SyncState } from '@solidsync/shared'
 
 export type { OrgSnapshot }
 
@@ -24,7 +24,7 @@ const POLL_MS = 3000
  * the server rev moves, and reconciles the local isomorphic-git mirror.
  */
 export class SyncService {
-  private api: SolidGitApi
+  private api: SolidSyncApi
   private mirror: Mirror
   private timer: NodeJS.Timeout | null = null
   private polling = false
@@ -46,7 +46,7 @@ export class SyncService {
   ) {
     this.mirrorRoot = mirrorRoot
     const base = ''
-    this.api = new SolidGitApi(base)
+    this.api = new SolidSyncApi(base)
     this.api.user = userName
     this.mirror = new Mirror(mirrorRoot, userName)
   }
@@ -186,7 +186,7 @@ export class SyncService {
     await this.act(() => this.api.saveVersion(opts))
   }
 
-  async setWorkStatus(partId: string, status: Parameters<SolidGitApi['setWorkStatus']>[1]): Promise<void> {
+  async setWorkStatus(partId: string, status: Parameters<SolidSyncApi['setWorkStatus']>[1]): Promise<void> {
     await this.act(() => this.api.setWorkStatus(partId, status))
   }
 

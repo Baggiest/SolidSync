@@ -1,8 +1,8 @@
 import { app } from 'electron'
 import { promises as fsp } from 'node:fs'
 import path from 'node:path'
-import type { AppConfig } from '@solidgit/shared'
-import { DEFAULT_PORT } from '@solidgit/shared'
+import type { AppConfig } from '@solidsync/shared'
+import { DEFAULT_PORT } from '@solidsync/shared'
 
 const DEFAULTS: AppConfig = {
   configured: false,

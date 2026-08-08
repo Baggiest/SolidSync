@@ -1,6 +1,7 @@
-appId: com.pyrobotics.solidgit
-productName: SolidGit
+appId: com.pyrobotics.solidsync
+productName: SolidSync
 copyright: Copyright © 2026 Pyrobotics
+electronVersion: 43.3.0
 
 directories:
   buildResources: build
@@ -22,11 +23,11 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
-  shortcutName: SolidGit
+  shortcutName: SolidSync
   createDesktopShortcut: true
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
 
 publish:
   - provider: generic
-    url: https://example.com/solidgit/ # placeholder, replace when you have a host
+    url: https://example.com/solidsync/ # placeholder, replace when you have a host

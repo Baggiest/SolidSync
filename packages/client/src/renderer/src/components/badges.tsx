@@ -1,4 +1,4 @@
-import type { SyncState, WorkStatus } from '@solidgit/shared'
+import type { SyncState, WorkStatus } from '@solidsync/shared'
 import { SYNC_META, WORK_META } from '../lib/status'
 
 export function WorkBadge({ status }: { status: WorkStatus }) {

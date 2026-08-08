@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { AppConfig, ClientState, WorkStatus } from '@solidgit/shared'
+import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
 
 const api = {
   // state
@@ -43,6 +43,6 @@ const api = {
   getPathForFile: (file: File): string => webUtils.getPathForFile(file)
 }
 
-export type SolidGitApi = typeof api
+export type SolidSyncApi = typeof api
 
-contextBridge.exposeInMainWorld('solidgit', api)
+contextBridge.exposeInMainWorld('solidsync', api)

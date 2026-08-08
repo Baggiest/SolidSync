@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 
 const execFileP = promisify(execFile)
 
-export const GIT_IDENTITY = { name: 'SolidGit Server', email: 'solidgit@local' }
+export const GIT_IDENTITY = { name: 'SolidSync Server', email: 'solidsync@local' }
 
 export class GitError extends Error {}
 
@@ -45,7 +45,7 @@ export class Repo {
     } catch (err) {
       const message =
         err instanceof Error && 'code' in err && (err as any).code === 'ENOENT'
-          ? 'git executable not found. SolidGit needs git installed on the server machine.'
+          ? 'git executable not found. SolidSync needs git installed on the server machine.'
           : err instanceof Error
             ? err.message
             : String(err)

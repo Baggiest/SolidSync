@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { DragEvent } from 'react'
-import type { PartInfo, SectionInfo, SyncState } from '@solidgit/shared'
+import type { PartInfo, SectionInfo, SyncState } from '@solidsync/shared'
 import { SyncBadge, WorkBadge } from './badges'
 import { IconFile, IconFolder } from './icons'
 import { formatSince } from '../lib/format'
@@ -63,7 +63,7 @@ export function PartTable(props: {
               e.stopPropagation()
               setDraggingRow(null)
               const f = e.dataTransfer.files?.[0]
-              if (f) props.onDropVersion(part, window.solidgit.getPathForFile(f))
+              if (f) props.onDropVersion(part, window.solidsync.getPathForFile(f))
             }}
             className={`grid ${GRID} cursor-pointer items-center gap-2 border-b border-zinc-800/50 px-2 py-1.5 text-[13px] transition-colors ${
               dragging

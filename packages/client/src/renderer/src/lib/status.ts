@@ -1,4 +1,4 @@
-import type { SyncState, WorkStatus } from '@solidgit/shared'
+import type { SyncState, WorkStatus } from '@solidsync/shared'
 
 export const WORK_META: Record<WorkStatus, { label: string; dot: string; ring: string; hint: string }> = {
   red: { label: 'Do not touch', dot: 'bg-red-500', ring: 'text-red-400', hint: 'Owner is mid-change — do not touch' },

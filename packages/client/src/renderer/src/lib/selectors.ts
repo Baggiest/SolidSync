@@ -1,4 +1,4 @@
-import type { OrgSnapshot, PartInfo, ProjectInfo, SectionInfo } from '@solidgit/shared'
+import type { OrgSnapshot, PartInfo, ProjectInfo, SectionInfo } from '@solidsync/shared'
 
 export function findSection(org: OrgSnapshot | null, projectId: string, sectionId: string): { project: ProjectInfo; section: SectionInfo } | null {
   if (!org) return null

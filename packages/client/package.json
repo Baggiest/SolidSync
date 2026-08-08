@@ -1,8 +1,7 @@
 {
-  "name": "@solidgit/client",
+  "name": "@solidsync/client",
   "version": "0.2.0",
-  "private": true,
-  "description": "SolidGit GUI: browse the shop org, throw in files, keep your own copy.",
+  "description": "SolidSync GUI: browse the shop org, throw in files, keep your own copy.",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -18,7 +17,7 @@
     "isomorphic-git": "^1.40.4"
   },
   "devDependencies": {
-    "@solidgit/shared": "*",
+    "@solidsync/shared": "*",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",

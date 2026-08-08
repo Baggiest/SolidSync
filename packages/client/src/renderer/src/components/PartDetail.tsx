@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidgit/shared'
+import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidsync/shared'
 import { IconCheck, IconFile, IconExternal } from './icons'
 import { formatClock, formatSize } from '../lib/format'
 import { findPart } from '../lib/selectors'

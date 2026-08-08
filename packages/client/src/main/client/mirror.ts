@@ -1,7 +1,7 @@
 import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import * as git from 'isomorphic-git'
-import type { ProjectInfo } from '@solidgit/shared'
+import type { ProjectInfo } from '@solidsync/shared'
 
 export interface MirrorIndex {
   rev: number
@@ -46,7 +46,7 @@ export class Mirror {
   }
 
   private indexPath(projectId: string): string {
-    return path.join(this.projectDir(projectId), '.solidgit-mirror.json')
+    return path.join(this.projectDir(projectId), '.solidsync-mirror.json')
   }
 
   abs(projectId: string, rel: string): string {

@@ -12,7 +12,7 @@ export default function Onboarding() {
     setBusy(true)
     setError(null)
     const err = await doAction(
-      window.solidgit.saveOnboarding({
+      window.solidsync.saveOnboarding({
         configured: true,
         name: name.trim() || 'Mechanic',
         serverIp: serverIp.trim() || '127.0.0.1',
@@ -29,7 +29,7 @@ export default function Onboarding() {
   return (
     <div className="flex h-full items-center justify-center bg-zinc-900 p-6">
       <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">SolidGit</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">SolidSync</h1>
         <p className="mt-1 text-sm text-zinc-400">
           The shop-floor part filer. One shared org, no logins, no VCS jargon.
         </p>
@@ -82,7 +82,7 @@ export default function Onboarding() {
           disabled={busy}
           className="mt-5 w-full rounded-md bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
         >
-          {busy ? 'Starting…' : 'Open SolidGit'}
+          {busy ? 'Starting…' : 'Open SolidSync'}
         </button>
       </div>
     </div>

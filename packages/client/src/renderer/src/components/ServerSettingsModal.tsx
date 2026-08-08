@@ -19,7 +19,7 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
       serverIp: serverIp.trim() || appConfig.serverIp,
       port: Number(port) || appConfig.port || 3020
     }
-    const err = await doAction(window.solidgit.saveOnboarding(cfg))
+    const err = await doAction(window.solidsync.saveOnboarding(cfg))
     setBusy(false)
     if (err) {
       setError(err)

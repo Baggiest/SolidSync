@@ -16,7 +16,7 @@ connecting to it over the local network.**
 
 ```
                     ┌─────────────────────┐
-   shop machine 1   │  solidgit-server    │   main org (source of truth)
+   shop machine 1   │  solidsync-server    │   main org (source of truth)
    ("the potato")   │  node cli serve     │   sql.js DB + per-project git repos
                     │  0.0.0.0:3020       │
                     └─────────┬───────────┘
@@ -24,7 +24,7 @@ connecting to it over the local network.**
               ┌───────────────┼───────────────┐
               ▼               ▼               ▼
    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-   │ SolidGit GUI │ │ SolidGit GUI │ │ SolidGit GUI │  one per engineer
+   │ SolidSync GUI │ │ SolidSync GUI │ │ SolidSync GUI │  one per engineer
    │ (client)     │ │ (client)     │ │ (client)     │  local mirror, offline-capable
    └──────────────┘ └──────────────┘ └──────────────┘
 ```
@@ -36,17 +36,17 @@ reach it by `IP:port`, identity comes from the `X-User` header.
 ## 3. Repository layout — npm-workspaces monorepo
 
 ```
-solidgit0/
+solidsync0/
 ├── spec.md                 (original product spec — unchanged)
 ├── spec2.md                (this plan)
 ├── package.json            (workspaces: packages/*, root scripts)
 ├── vitest.config.ts        (root test runner)
 └── packages/
-    ├── shared/             @solidgit/shared
+    ├── shared/             @solidsync/shared
     │   └── src/            types.ts, constants.ts (VOCAB, DEFAULT_PORT)
-    ├── server/             @solidgit/server   (headless; no Electron)
+    ├── server/             @solidsync/server   (headless; no Electron)
     │   ├── src/
-    │   │   ├── cli.ts          entrypoint: `solidgit-server <cmd>`
+    │   │   ├── cli.ts          entrypoint: `solidsync-server <cmd>`
     │   │   ├── commands/       serve, init, health, list, import, status, backup
     │   │   ├── store.ts        OrgStore (sql.js)   [moved]
     │   │   ├── git.ts          Repo wrapper        [moved]
@@ -57,7 +57,7 @@ solidgit0/
     │   │   └── lib/            queue.ts, hash.ts   [moved]
     │   ├── tests/              store.test.ts, api.test.ts  [moved]
     │   └── scripts/build.mjs   esbuild bundle → dist/cli.js + wasm copy
-    └── client/             @solidgit/client   (Electron GUI only)
+    └── client/             @solidsync/client   (Electron GUI only)
         ├── electron.vite.config.ts   [moved]
         ├── electron-builder.yml      [moved]
         └── src/
@@ -72,10 +72,10 @@ solidgit0/
 ### Commands
 
 ```
-solidgit-server <command> [options]
+solidsync-server <command> [options]
 
   serve    Run the org server (default command)
-             --dir <path>   data dir            (default ~/.solidgit)
+             --dir <path>   data dir            (default ~/.solidsync)
              --port <n>     listen port         (default 3020)
              --host <ip>    bind address        (default 0.0.0.0)
              --name <org>   org name            (default "Shop")
@@ -130,7 +130,7 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
 
 ## 7. Shared package
 
-`@solidgit/shared` holds the type contracts (`types.ts`) and UI vocabulary
+`@solidsync/shared` holds the type contracts (`types.ts`) and UI vocabulary
 (`constants.ts`) used by both sides. Kept dependency-free; bundled by each
 artifact (devDependency so electron-vite inlines it, never externalized).
 
@@ -139,7 +139,7 @@ artifact (devDependency so electron-vite inlines it, never externalized).
 | Command | Purpose |
 |---|---|
 | `npm run dev` | run the Electron client |
-| `npm run server` | run `solidgit-server serve` (dev, tsx) |
+| `npm run server` | run `solidsync-server serve` (dev, tsx) |
 | `npm run build` | build all workspaces (shared, server bundle, client) |
 | `npm run typecheck` | tsc across all workspaces |
 | `npm test` | vitest (server tests at `packages/server/tests`) |

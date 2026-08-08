@@ -1,4 +1,4 @@
-import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidgit/shared'
+import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidsync/shared'
 import { ServerClient } from '../http-client'
 import type { CommandOptions } from '../cli'
 
@@ -15,7 +15,7 @@ function findPart(org: OrgSnapshot, frag: string): PartInfo | null {
 
 export async function runStatus(o: CommandOptions, partId?: string): Promise<number> {
   if (!partId) {
-    console.error('usage: solidgit-server status PARTID [--set green|yellow|red] [--url URL]')
+    console.error('usage: solidsync-server status PARTID [--set green|yellow|red] [--url URL]')
     return 1
   }
   const client = new ServerClient(o.url, o.user)

@@ -11,7 +11,7 @@ import type { CommandOptions } from '../cli'
  */
 export async function runBackup(o: CommandOptions, outPath?: string): Promise<number> {
   if (!existsSync(o.dir)) {
-    console.error(`org dir not found: ${o.dir} (run "solidgit-server init" or "serve" first)`)
+    console.error(`org dir not found: ${o.dir} (run "solidsync-server init" or "serve" first)`)
     return 1
   }
 
@@ -22,7 +22,7 @@ export async function runBackup(o: CommandOptions, outPath?: string): Promise<nu
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
   const out = outPath
     ? path.resolve(outPath)
-    : path.join(process.cwd(), `solidgit-backup-${stamp}.tar.gz`)
+    : path.join(process.cwd(), `solidsync-backup-${stamp}.tar.gz`)
 
   await tar(out, o.dir)
   console.log(`Backup written: ${out}`)

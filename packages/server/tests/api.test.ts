@@ -13,7 +13,7 @@ let server: { close: () => Promise<void>; port: number }
 let api: ServerClient
 
 beforeAll(async () => {
-  tmp = await mkdtemp(path.join(os.tmpdir(), 'solidgit-api-'))
+  tmp = await mkdtemp(path.join(os.tmpdir(), 'solidsync-api-'))
   store = await OrgStore.open(tmp, 'API Shop')
   server = await startHttp(createApp(store), 0, '127.0.0.1')
   api = new ServerClient(`http://127.0.0.1:${server.port}`, 'tester')

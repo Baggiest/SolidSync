@@ -65,8 +65,8 @@ export default function App() {
     <div className="flex h-full flex-col bg-zinc-900 text-zinc-200">
       <ConnectBanner onEditServer={() => setServerOpen(true)} />
       <TopBar
-        onRefresh={() => void run(window.solidgit.refresh())}
-        onOpenMirror={() => void window.solidgit.revealRoot()}
+        onRefresh={() => void run(window.solidsync.refresh())}
+        onOpenMirror={() => void window.solidsync.revealRoot()}
         onOpenServer={() => setServerOpen(true)}
       />
 
@@ -86,7 +86,7 @@ export default function App() {
           }}
           onStartMyCopy={(pid) => {
             void (async () => {
-              const err = await doAction(window.solidgit.startMyCopy(pid))
+              const err = await doAction(window.solidsync.startMyCopy(pid))
               if (err) show(err)
               else {
                 show('Started your own copy.', 'ok')
@@ -117,13 +117,13 @@ export default function App() {
           <PartDetail
             part={part.part}
             org={state.org}
-            onSetWork={(pid, s) => void run(window.solidgit.setWorkStatus(pid, s))}
-            onSetHead={(pid, v) => void run(window.solidgit.setHead(pid, v))}
-            onSetParent={(pid, parent) => void run(window.solidgit.setParent(pid, parent))}
-            onSetName={(pid, name) => void run(window.solidgit.setPartName(pid, name))}
+            onSetWork={(pid, s) => void run(window.solidsync.setWorkStatus(pid, s))}
+            onSetHead={(pid, v) => void run(window.solidsync.setHead(pid, v))}
+            onSetParent={(pid, parent) => void run(window.solidsync.setParent(pid, parent))}
+            onSetName={(pid, name) => void run(window.solidsync.setPartName(pid, name))}
             onOpenVersion={(p, v) =>
               void run(
-                window.solidgit.openVersion({
+                window.solidsync.openVersion({
                   projectId: sel.project.id,
                   sectionId: sel.section.id,
                   partId: p.id,
@@ -154,7 +154,7 @@ export default function App() {
           placeholder="e.g. Gearbox V2"
           onClose={() => setNewProjectOpen(false)}
           onSubmit={async (name) => {
-            await run(window.solidgit.createProject(name))
+            await run(window.solidsync.createProject(name))
             setNewProjectOpen(false)
             setToastKind('ok')
             setToast(`Project "${name}" created`)
@@ -168,7 +168,7 @@ export default function App() {
           placeholder="e.g. Drivetrain"
           onClose={() => setNewSectionOpen(false)}
           onSubmit={async (name) => {
-            await run(window.solidgit.createSection(projectId, name))
+            await run(window.solidsync.createSection(projectId, name))
             setNewSectionOpen(false)
           }}
         />

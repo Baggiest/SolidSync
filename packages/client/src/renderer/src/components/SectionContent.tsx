@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { ProjectInfo, SectionInfo, SyncState } from '@solidgit/shared'
+import type { ProjectInfo, SectionInfo, SyncState } from '@solidsync/shared'
 import { PartTable, DropHint } from './PartTable'
 import { Modal } from './Modal'
 import { IconPlus } from './icons'
@@ -37,7 +37,7 @@ export default function SectionContent(props: {
     if (!pending) return
     setBusy(true)
     const err = await doAction(
-      window.solidgit.throwIn({
+      window.solidsync.throwIn({
         projectId: props.project.id,
         sectionId: props.section.id,
         filePath: pending.filePath,
@@ -69,7 +69,7 @@ export default function SectionContent(props: {
         e.preventDefault()
         hideDrag()
         const file = e.dataTransfer.files?.[0]
-        if (file) setPending({ filePath: window.solidgit.getPathForFile(file), fileName: file.name })
+        if (file) setPending({ filePath: window.solidsync.getPathForFile(file), fileName: file.name })
       }}
     >
       <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2">
@@ -83,7 +83,7 @@ export default function SectionContent(props: {
           <button
             onClick={() => {
               void (async () => {
-                const p = await window.solidgit.pickFile()
+                const p = await window.solidsync.pickFile()
                 if (p) {
                   const sep = p.replace(/\\/g, '/')
                   setPending({ filePath: p, fileName: sep.split('/').pop() ?? p })
@@ -106,7 +106,7 @@ export default function SectionContent(props: {
           onPick={props.onPickPart}
           onDropVersion={async (part, filePath) => {
             const err = await doAction(
-              window.solidgit.saveVersion({
+              window.solidsync.saveVersion({
                 projectId: props.project.id,
                 partId: part.id,
                 filePath

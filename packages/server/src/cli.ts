@@ -30,11 +30,11 @@ export function envOrDefault(key: string, fallback: string): string {
 }
 
 function resolveOptions(raw: Record<string, string>): CommandOptions {
-  const dir = raw.dir ?? envOrDefault('SOLIDGIT_DIR', path.join(os.homedir(), '.solidgit'))
-  const port = Number(raw.port ?? envOrDefault('SOLIDGIT_PORT', '3020'))
-  const host = raw.host ?? envOrDefault('SOLIDGIT_HOST', '0.0.0.0')
-  const name = raw.name ?? envOrDefault('SOLIDGIT_NAME', 'Shop')
-  const user = raw.user ?? envOrDefault('SOLIDGIT_USER', 'you')
+  const dir = raw.dir ?? envOrDefault('SOLIDSYNC_DIR', path.join(os.homedir(), '.solidsync'))
+  const port = Number(raw.port ?? envOrDefault('SOLIDSYNC_PORT', '3020'))
+  const host = raw.host ?? envOrDefault('SOLIDSYNC_HOST', '0.0.0.0')
+  const name = raw.name ?? envOrDefault('SOLIDSYNC_NAME', 'Shop')
+  const user = raw.user ?? envOrDefault('SOLIDSYNC_USER', 'you')
   const url = raw.url ?? `http://127.0.0.1:${port}`
   return {
     dir,
@@ -50,10 +50,10 @@ function resolveOptions(raw: Record<string, string>): CommandOptions {
   }
 }
 
-const USAGE = `solidgit-server — the SolidGit shop server (headless, universal)
+const USAGE = `solidsync-server — the SolidSync shop server (headless, universal)
 
 Usage:
-  solidgit-server <command> [options]
+  solidsync-server <command> [options]
 
 Commands:
   serve           Run the server and keep it in the foreground.
@@ -68,13 +68,13 @@ Commands:
   version         Print the server version.
 
 Common options:
-  --dir PATH      Org data folder (default $HOME/.solidgit, or $SOLIDGIT_DIR).
-  --port N        Port for serve (default 3020, or $SOLIDGIT_PORT).
-  --host IP       Bind address for serve (default 0.0.0.0, or $SOLIDGIT_HOST).
-  --name NAME     Org name shown in the UI (default "Shop", or $SOLIDGIT_NAME).
+  --dir PATH      Org data folder (default $HOME/.solidsync, or $SOLIDSYNC_DIR).
+  --port N        Port for serve (default 3020, or $SOLIDSYNC_PORT).
+  --host IP       Bind address for serve (default 0.0.0.0, or $SOLIDSYNC_HOST).
+  --name NAME     Org name shown in the UI (default "Shop", or $SOLIDSYNC_NAME).
   --url URL       Server base URL for client-ish commands
                   (default http://127.0.0.1:<port> from the settings above).
-  --user NAME     Your name (default "you", or $SOLIDGIT_USER).
+  --user NAME     Your name (default "you", or $SOLIDSYNC_USER).
   --json          Machine-readable output where supported.
   -h, --help      Show this help.
 `

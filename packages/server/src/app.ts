@@ -7,7 +7,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { OrgStore } from './store'
 import { sha1File } from './lib/hash'
-import type { VersionInfo, WorkStatus } from '@solidgit/shared'
+import type { VersionInfo, WorkStatus } from '@solidsync/shared'
 
 /**
  * Plain REST, JSON over HTTP (spec §10). No websockets. Clients poll
@@ -19,7 +19,7 @@ export function createApp(store: OrgStore): express.Express {
   app.use(express.json({ limit: '4mb' }))
 
   // CAD files can be large; stream uploads through a temp dir instead of RAM.
-  const tmpRoot = path.join(os.tmpdir(), `solidgit-${randomUUID().slice(0, 8)}`)
+  const tmpRoot = path.join(os.tmpdir(), `solidsync-${randomUUID().slice(0, 8)}`)
   const upload = multer({
     storage: multer.diskStorage({
       destination: (_req, _file, cb) => {

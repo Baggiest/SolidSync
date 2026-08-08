@@ -1,8 +1,8 @@
-import type { AppConfig, ClientState, WorkStatus } from '@solidgit/shared'
+import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
 
 declare global {
   interface Window {
-    solidgit: {
+    solidsync: {
       getState: () => Promise<ClientState>
       subscribe: (cb: (state: ClientState) => void) => () => void
       saveOnboarding: (cfg: AppConfig) => Promise<unknown>

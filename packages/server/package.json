@@ -1,11 +1,11 @@
 {
-  "name": "@solidgit/server",
+  "name": "@solidsync/server",
   "version": "0.2.0",
-  "description": "Headless SolidGit shop server with a CLI: org DB, per-project git repos, REST API.",
+  "description": "Headless SolidSync shop server with a CLI: org DB, per-project git repos, REST API.",
   "private": true,
   "type": "module",
   "bin": {
-    "solidgit-server": "dist/cli.js"
+    "solidsync-server": "dist/cli.js"
   },
   "main": "src/index.ts",
   "exports": {
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@solidgit/shared": "*",
+    "@solidsync/shared": "*",
     "express": "^5.2.1",
     "multer": "^2.2.0",
     "sql.js": "^1.14.1"

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { ClientState } from '@solidgit/shared'
+import type { ClientState } from '@solidsync/shared'
 
 export const EMPTY_STATE: ClientState = {
   appConfig: { configured: false, name: '', serverIp: '', port: 1 },
@@ -37,8 +37,8 @@ export function useClientState(): ClientState {
 
 /** Wire the store to the preload bridge. Returns an unsubscribe fn. */
 export function initStore(): () => void {
-  window.solidgit.getState().then(setClientState).catch(() => undefined)
-  return window.solidgit.subscribe(setClientState)
+  window.solidsync.getState().then(setClientState).catch(() => undefined)
+  return window.solidsync.subscribe(setClientState)
 }
 
 /** Run an action; returns an error message or null. */

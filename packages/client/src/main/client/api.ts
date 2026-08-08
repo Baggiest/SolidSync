@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { OrgSnapshot, WorkStatus } from '@solidgit/shared'
+import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
 export class ApiError extends Error {}
 
@@ -19,8 +19,8 @@ async function parse<T>(res: globalThis.Response): Promise<T> {
   throw new ApiError(message)
 }
 
-/** Thin REST client toward the SolidGit server (the single source of truth). */
-export class SolidGitApi {
+/** Thin REST client toward the SolidSync server (the single source of truth). */
+export class SolidSyncApi {
   user: string
 
   baseUrl: string

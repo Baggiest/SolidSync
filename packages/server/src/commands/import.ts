@@ -5,7 +5,7 @@ import type { CommandOptions } from '../cli'
 
 export async function runImport(o: CommandOptions, filePath?: string): Promise<number> {
   if (!filePath) {
-    console.error('usage: solidgit-server import FILE [--project NAME] [--section NAME] [--url URL]')
+    console.error('usage: solidsync-server import FILE [--project NAME] [--section NAME] [--url URL]')
     return 1
   }
   const abs = path.resolve(filePath)

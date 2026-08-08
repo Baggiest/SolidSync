@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { SyncService } from './client/sync'
-import type { AppConfig } from '@solidgit/shared'
+import type { AppConfig } from '@solidsync/shared'
 
 /**
  * One client instance: a SyncService toward the configured server. The server
- * itself runs as a separate headless program (`solidgit-server`) on the shop
+ * itself runs as a separate headless program (`solidsync-server`) on the shop
  * network and is never started by the GUI.
  */
 export class Session {

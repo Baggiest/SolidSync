@@ -2,8 +2,8 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import path from 'node:path'
 import { ConfigStore } from './config'
 import { Session } from './session'
-import type { AppConfig, ClientState, WorkStatus } from '@solidgit/shared'
-import { DEFAULT_PORT } from '@solidgit/shared'
+import type { AppConfig, ClientState, WorkStatus } from '@solidsync/shared'
+import { DEFAULT_PORT } from '@solidsync/shared'
 
 const session = new Session()
 const configStore = new ConfigStore()
@@ -42,7 +42,7 @@ function pushState(): void {
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    title: 'SolidGit',
+    title: 'SolidSync',
     width: 1280,
     height: 800,
     minWidth: 940,

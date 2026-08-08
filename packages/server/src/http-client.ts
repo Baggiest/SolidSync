@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { OrgSnapshot, WorkStatus } from '@solidgit/shared'
+import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
 export class ApiError extends Error {}
 

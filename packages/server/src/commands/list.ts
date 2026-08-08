@@ -1,6 +1,6 @@
 import { ServerClient } from '../http-client'
 import type { CommandOptions } from '../cli'
-import { WorkStatus } from '@solidgit/shared'
+import { WorkStatus } from '@solidsync/shared'
 
 const STATUS_DOT: Record<WorkStatus, string> = {
   red: '●',

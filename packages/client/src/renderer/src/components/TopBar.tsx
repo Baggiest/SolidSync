@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useClientState } from '../lib/store'
 import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconCopy } from './icons'
-import { VOCAB } from '@solidgit/shared'
+import { VOCAB } from '@solidsync/shared'
 
 export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void; onOpenServer: () => void }) {
   const state = useClientState()
@@ -21,7 +21,7 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950/90 px-3">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold tracking-tight text-zinc-100">SolidGit</span>
+        <span className="text-sm font-semibold tracking-tight text-zinc-100">SolidSync</span>
         {org && (
           <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-medium text-zinc-400">
             {org.orgName}

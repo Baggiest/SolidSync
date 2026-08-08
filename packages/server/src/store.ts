@@ -4,7 +4,7 @@ import path from 'node:path'
 import { type Database } from 'sql.js'
 import { Repo } from './git'
 import { loadSqlJs } from './wasm'
-import type { OrgSnapshot, PartInfo, WorkStatus, VersionInfo } from '@solidgit/shared'
+import type { OrgSnapshot, PartInfo, WorkStatus, VersionInfo } from '@solidsync/shared'
 import { SerialQueue } from './lib/queue'
 
 const SCHEMA = `
@@ -84,7 +84,7 @@ function rowToPart(r: Record<string, unknown>): PartInfo {
 /**
  * Metadata source of truth for the org: projects, sections, parts, versions,
  * work statuses, parent links. Stored in ONE SQLite file (sql.js / wasm) at
- * <root>/solidgit.db — zero setup, trivially backed up, runs on a potato.
+ * <root>/solidsync.db — zero setup, trivially backed up, runs on a potato.
  *
  * Version FILE bytes live in per-project git repos (see Repo) managed with the
  * real git binary. Every committed mutation bumps the org `rev`; clients poll
@@ -109,7 +109,7 @@ export class OrgStore {
   static async open(rootDir: string, orgName = 'Shop'): Promise<OrgStore> {
     const sql = await loadSqlJs()
     await mkdir(rootDir, { recursive: true })
-    const dbPath = path.join(rootDir, 'solidgit.db')
+    const dbPath = path.join(rootDir, 'solidsync.db')
     let db: Database
     try {
       const bytes = await readFile(dbPath)
@@ -573,7 +573,7 @@ export class OrgStore {
 
   async save(): Promise<void> {
     const bytes = this.db.export()
-    await writeFile(path.join(this.rootDir, 'solidgit.db'), Buffer.from(bytes))
+    await writeFile(path.join(this.rootDir, 'solidsync.db'), Buffer.from(bytes))
   }
 
   async close(): Promise<void> {
