@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import path from 'node:path'
+import iconPath from '../../build/icon.png?asset'
 import { ConfigStore } from './config'
 import { Session } from './session'
 import { TlsTrust, fetchServerCa } from './tls'
@@ -56,6 +57,7 @@ function createWindow(): void {
     minWidth: 940,
     minHeight: 600,
     backgroundColor: '#18181b',
+    icon: iconPath,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),

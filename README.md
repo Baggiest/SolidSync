@@ -66,13 +66,21 @@ runs on any PC on the shop floor and needs nothing but itself.
   (`npm run build:win` → `dist/SolidSync-<version>-x64.exe`). Drop the installer
   on a shared drive or your release page; teammates double-click and it's done.
   The portable `.exe` doesn't even need installing.
+- **Linux** — `npm run build:linux` produces a `.deb`
+  (`dist/SolidSync-<version>-amd64.deb`), installable with `sudo apt install ./SolidSync-0.2.0-amd64.deb`.
 - **Other platforms / building it yourself** — clone the repo and build:
 
   ```bash
   npm install
-  npm run build       # compile main / preload / renderer
-  npm run build:win   # Windows installer + portable (run on a Windows box)
+  npm run build         # compile main / preload / renderer
+  npm run build:win     # Windows installer + portable (run on a Windows box)
+  npm run build:linux   # Linux .deb
   ```
+
+**App icon.** Drop your `icon.png` (at least 512×512, transparent background) at
+`packages/client/build/icon.png`. It's used for the packaged app icon, the
+installer, the `.desktop` entry, and the in-app window icon. The repo ships a
+placeholder — overwrite it before shipping.
 
 On first run, enter your name and pick **Join an org**, then type the address
 your admin printed when they started the server (`http://<LAN-IP>:3020`).
@@ -140,6 +148,7 @@ node node_modules/electron/install.js
 | `npm run typecheck` | TypeScript checks (node + web) |
 | `npm run build:win` | Build Windows installer (NSIS + portable) |
 | `npm run pack:win` | Build an unpacked Windows folder |
+| `npm run build:linux` | Build a Linux `.deb` |
 
 Default port is `3020`. Server binds `0.0.0.0` so teammates can reach it over
 the LAN; the top bar shows the reachable address.

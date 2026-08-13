@@ -28,6 +28,19 @@ nsis:
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
 
+linux:
+  target:
+    - deb
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  icon: build/icon.png
+  category: Utility
+  maintainer: Pyrobotics
+  vendor: Pyrobotics
+  executableName: solidsync
+  syncDesktopName: true
+  synopsis: Shop-floor part filer
+  description: SolidSync syncs your files across the shop floor.
+
 publish:
   - provider: generic
     url: https://example.com/solidsync/ # placeholder, replace when you have a host

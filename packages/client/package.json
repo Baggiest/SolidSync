@@ -1,7 +1,10 @@
 {
   "name": "@solidsync/client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "SolidSync GUI: syncs your files, thats it, takes 5 mins to set up",
+  "author": "Pyrobotics",
+  "homepage": "https://github.com/pyrobotics/solidsync",
+  "desktopName": "solidsync",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -11,7 +14,10 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "build:win": "electron-vite build && electron-builder --win",
-    "pack:win": "electron-vite build && electron-builder --win --dir"
+    "pack:win": "electron-vite build && electron-builder --win --dir",
+    "build:linux": "electron-vite build && electron-builder --linux",
+    "pack:linux": "electron-vite build && electron-builder --linux --dir",
+    "build:all": "electron-vite build && electron-builder --win --linux"
   },
   "dependencies": {
     "isomorphic-git": "^1.40.4",
