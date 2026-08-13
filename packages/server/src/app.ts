@@ -7,6 +7,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { OrgStore } from './store'
 import { sha1File } from './lib/hash'
+import { VERSION } from '@solidsync/shared'
 import type { VersionInfo, WorkStatus } from '@solidsync/shared'
 
 /**
@@ -57,7 +58,7 @@ export function createApp(store: OrgStore, opts: { caPem?: string } = {}): expre
       orgName: store.getOrgName(),
       rev: store.getRev(),
       serverTime: new Date().toISOString(),
-      version: SERVER_VERSION
+      version: VERSION
     })
   })
 
@@ -239,5 +240,3 @@ function parentIdOrNull(req: Request): string | null {
   const v = req.body?.parentId
   return v && v !== '' ? String(v) : null
 }
-
-export const SERVER_VERSION = '0.2.0'
