@@ -57,6 +57,62 @@ saves blind.
 merge/clone/checkout. The product says *throw in*, *save a version*, *set as
 head*, *sync*, *out of sync / current*, *start my own copy*.
 
+## Install the client
+
+The client is a plain desktop app — no login, no account, no install fluff. It
+runs on any PC on the shop floor and needs nothing but itself.
+
+- **Windows** — the build produces an NSIS installer and a portable `.exe`
+  (`npm run build:win` → `dist/SolidSync-<version>-x64.exe`). Drop the installer
+  on a shared drive or your release page; teammates double-click and it's done.
+  The portable `.exe` doesn't even need installing.
+- **Other platforms / building it yourself** — clone the repo and build:
+
+  ```bash
+  npm install
+  npm run build       # compile main / preload / renderer
+  npm run build:win   # Windows installer + portable (run on a Windows box)
+  ```
+
+On first run, enter your name and pick **Join an org**, then type the address
+your admin printed when they started the server (`http://<LAN-IP>:3020`).
+
+## Host the server
+
+One machine on the shop network runs the headless server — the org lives there,
+clients just point at it. Needs **Node.js 20+** and **git** (the version-storage
+engine) on that machine.
+
+```bash
+npm install -g solidsync
+solidsync-server serve
+```
+
+That's it. It binds `0.0.0.0:3020` by default, prints the URL to hand out
+(`http://<LAN-IP>:3020`), and stays in the foreground until Ctrl+C.
+
+Everything is optional; defaults work for most shops:
+
+| Option | Env var | Default | Meaning |
+|---|---|---|---|
+| `--dir PATH` | `SOLIDSYNC_DIR` | `~/.solidsync` | where org data lives |
+| `--port N` | `SOLIDSYNC_PORT` | `3020` | HTTP port |
+| `--host IP` | `SOLIDSYNC_HOST` | `0.0.0.0` | bind address |
+| `--name NAME` | `SOLIDSYNC_NAME` | `Shop` | org name shown in the UI |
+
+```bash
+solidsync-server serve --port 3020 --name "Fab Shop"
+```
+
+- **HTTPS:** add `--tls` to also serve HTTPS on `--tls-port` (default `3443`).
+  First run generates a throwaway CA + cert under `<dir>/tls/` and prints the CA
+  fingerprint; clients verify against it on first connect. See the TLS section
+  below.
+- **Backups:** `solidsync-server backup` snapshots the whole org into one
+  archive, or just copy the `--dir` folder.
+- **More commands:** `init`, `health`, `list`, `import FILE`, `status PARTID`,
+  `branch PROJECT`, `version` — see `solidsync-server --help`.
+
 ## Running it
 
 First run shows a one-time setup: enter your name, choose **Host the org**
