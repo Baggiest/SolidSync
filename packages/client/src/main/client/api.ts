@@ -3,11 +3,12 @@ import { stat } from 'node:fs/promises'
 import { randomBytes } from 'node:crypto'
 import { Readable } from 'node:stream'
 import path from 'node:path'
+import { fetch as undiciFetch, Agent, type RequestInit, type Response } from 'undici'
 import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
 export class ApiError extends Error {}
 
-async function parse<T>(res: globalThis.Response): Promise<T> {
+async function parse<T>(res: Response): Promise<T> {
   const text = await res.text()
   if (res.ok) {
     return (text ? JSON.parse(text) : {}) as T
@@ -28,7 +29,10 @@ export class SolidSyncApi {
 
   baseUrl: string
 
-  constructor(baseUrl: string, user = 'someone') {
+  /** TLS agent; set to a CA-pinned undici Agent when talking over HTTPS. */
+  dispatcher?: Agent
+
+  constructor(baseUrl = '', user = 'someone') {
     this.baseUrl = baseUrl
     this.user = user
   }
@@ -37,22 +41,26 @@ export class SolidSyncApi {
     return `${this.baseUrl}${p.startsWith('/') ? p : '/' + p}`
   }
 
+  private req(p: string, init: RequestInit = {}): Promise<Response> {
+    return undiciFetch(this.url(p), { ...init, dispatcher: this.dispatcher })
+  }
+
   private jsonHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json', 'X-User': this.user }
   }
 
   async health(): Promise<{ ok: boolean; orgName: string; rev: number; serverTime: string; version: string }> {
-    const res = await fetch(this.url('/api/health'), { signal: AbortSignal.timeout(8000) })
+    const res = await this.req('/api/health', { signal: AbortSignal.timeout(8000) })
     return parse(res)
   }
 
   async getOrg(): Promise<OrgSnapshot> {
-    const res = await fetch(this.url('/api/org'), { signal: AbortSignal.timeout(15000) })
+    const res = await this.req('/api/org', { signal: AbortSignal.timeout(15000) })
     return parse<OrgSnapshot>(res)
   }
 
   async createProject(name: string): Promise<string> {
-    const body = await fetch(this.url('/api/projects'), {
+    const body = await this.req('/api/projects', {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name })
@@ -61,7 +69,7 @@ export class SolidSyncApi {
   }
 
   async createSection(projectId: string, name: string): Promise<string> {
-    const body = await fetch(this.url(`/api/projects/${projectId}/sections`), {
+    const body = await this.req(`/api/projects/${projectId}/sections`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name })
@@ -71,7 +79,7 @@ export class SolidSyncApi {
 
   /** Start an independent working copy of a project (spec §6). */
   async branchProject(opts: { projectId: string; name?: string }): Promise<{ projectId: string; name: string }> {
-    const body = await fetch(this.url(`/api/projects/${opts.projectId}/copy`), {
+    const body = await this.req(`/api/projects/${opts.projectId}/copy`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name: opts.name ?? '' })
@@ -80,7 +88,7 @@ export class SolidSyncApi {
   }
 
   async setWorkStatus(partId: string, workStatus: WorkStatus): Promise<void> {
-    await fetch(this.url(`/api/parts/${partId}/status`), {
+    await this.req(`/api/parts/${partId}/status`, {
       method: 'PUT',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ workStatus })
@@ -88,7 +96,7 @@ export class SolidSyncApi {
   }
 
   async setHead(partId: string, versionId: string): Promise<void> {
-    await fetch(this.url(`/api/parts/${partId}/head`), {
+    await this.req(`/api/parts/${partId}/head`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ versionId })
@@ -96,7 +104,7 @@ export class SolidSyncApi {
   }
 
   async setParent(partId: string, parentId: string | null): Promise<void> {
-    await fetch(this.url(`/api/parts/${partId}/parent`), {
+    await this.req(`/api/parts/${partId}/parent`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ parentId })
@@ -104,7 +112,7 @@ export class SolidSyncApi {
   }
 
   async setPartName(partId: string, name: string): Promise<void> {
-    await fetch(this.url(`/api/parts/${partId}/name`), {
+    await this.req(`/api/parts/${partId}/name`, {
       method: 'PATCH',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name })
@@ -148,7 +156,7 @@ export class SolidSyncApi {
       })()
     )
 
-    return fetch(this.url(p), {
+    return this.req(p, {
       method: 'POST',
       headers: {
         'Content-Type': `multipart/form-data; boundary=${boundary}`,
@@ -187,8 +195,8 @@ export class SolidSyncApi {
 
   /** Raw bytes of one versioned file. */
   async downloadBytes(projectId: string, partId: string, versionId: string): Promise<Buffer> {
-    const res = await fetch(
-      this.url(`/api/projects/${projectId}/parts/${partId}/versions/${versionId}/file`),
+    const res = await this.req(
+      `/api/projects/${projectId}/parts/${partId}/versions/${versionId}/file`,
       { signal: AbortSignal.timeout(120000) }
     )
     if (!res.ok) throw new ApiError(`download failed (HTTP ${res.status})`)

@@ -1,7 +1,7 @@
 {
   "name": "@solidsync/client",
   "version": "0.2.0",
-  "description": "SolidSync GUI: browse the shop org, throw in files, keep your own copy.",
+  "description": "SolidSync GUI: syncs your files, thats it, takes 5 mins to set up",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -14,7 +14,8 @@
     "pack:win": "electron-vite build && electron-builder --win --dir"
   },
   "dependencies": {
-    "isomorphic-git": "^1.40.4"
+    "isomorphic-git": "^1.40.4",
+    "undici": "^7.0.0"
   },
   "devDependencies": {
     "@solidsync/shared": "*",

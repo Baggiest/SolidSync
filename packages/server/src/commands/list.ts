@@ -1,4 +1,4 @@
-import { ServerClient } from '../http-client'
+import { makeClient } from '../cli'
 import type { CommandOptions } from '../cli'
 import { WorkStatus } from '@solidsync/shared'
 
@@ -9,7 +9,7 @@ const STATUS_DOT: Record<WorkStatus, string> = {
 }
 
 export async function runList(o: CommandOptions): Promise<number> {
-  const client = new ServerClient(o.url, o.user)
+  const client = await makeClient(o)
   let org
   try {
     org = await client.getOrg()

@@ -13,7 +13,7 @@ import type { VersionInfo, WorkStatus } from '@solidsync/shared'
  * Plain REST, JSON over HTTP (spec §10). No websockets. Clients poll
  * /api/health and /api/org on an interval — nothing more than fetch().
  */
-export function createApp(store: OrgStore): express.Express {
+export function createApp(store: OrgStore, opts: { caPem?: string } = {}): express.Express {
   const app = express()
   app.disable('x-powered-by')
   app.use(express.json({ limit: '4mb' }))
@@ -43,6 +43,13 @@ export function createApp(store: OrgStore): express.Express {
   const userName = (req: Request): string => String(req.headers['x-user'] ?? 'someone')
 
   // ---- health / org -------------------------------------------------------------
+
+  // The org's TLS CA, served to clients for one-time trust (TOFU bootstrap).
+  if (opts.caPem) {
+    app.get('/tls/ca.pem', (_req, res) => {
+      res.type('application/x-pem-file').send(opts.caPem!)
+    })
+  }
 
   app.get('/api/health', (_req, res) => {
     res.json({

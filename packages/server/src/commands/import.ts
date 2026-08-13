@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { existsSync } from 'node:fs'
-import { ServerClient } from '../http-client'
+import { makeClient } from '../cli'
 import type { CommandOptions } from '../cli'
 
 export async function runImport(o: CommandOptions, filePath?: string): Promise<number> {
@@ -13,7 +13,7 @@ export async function runImport(o: CommandOptions, filePath?: string): Promise<n
     console.error(`file not found: ${abs}`)
     return 1
   }
-  const client = new ServerClient(o.url, o.user)
+  const client = await makeClient(o)
 
   const org = await client.getOrg()
   let project = org.projects.find((p) => p.name === o.project)

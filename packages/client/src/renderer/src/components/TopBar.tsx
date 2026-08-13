@@ -7,7 +7,7 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
   const state = useClientState()
   const { appConfig: cfg, connection, org } = state
 
-  const addr = cfg.serverIp ? `${cfg.serverIp}:${cfg.port}` : '—'
+  const addr = cfg.serverIp ? `${cfg.useTls ? 'https' : 'http'}://${cfg.serverIp}:${cfg.port}` : '—'
 
   const connText =
     connection === 'online' ? 'Connected' : connection === 'connecting' ? 'Connecting…' : 'Disconnected'

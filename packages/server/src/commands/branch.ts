@@ -1,4 +1,4 @@
-import { ServerClient } from '../http-client'
+import { makeClient } from '../cli'
 import type { CommandOptions } from '../cli'
 
 export async function runBranch(o: CommandOptions, projectName?: string, newName?: string): Promise<number> {
@@ -6,7 +6,7 @@ export async function runBranch(o: CommandOptions, projectName?: string, newName
     console.error('usage: solidsync-server branch PROJECTNAME [NEWNAME] [--url URL]')
     return 1
   }
-  const client = new ServerClient(o.url, o.user)
+  const client = await makeClient(o)
   const org = await client.getOrg()
   const project = org.projects.find((p) => p.name === projectName)
   if (!project) {

@@ -88,6 +88,25 @@ node node_modules/electron/install.js
 Default port is `3020`. Server binds `0.0.0.0` so teammates can reach it over
 the LAN; the top bar shows the reachable address.
 
+### HTTPS (encrypted) connections
+
+Public CAs won't issue certificates for LAN IPs, so SolidSync does its own
+TOFU (trust on first use):
+
+- Run the server with `--tls` to also serve HTTPS on `--tls-port` (default
+  `3443`, or `$SOLIDSYNC_TLS_PORT`). On first run it generates a throwaway CA
+  + server cert under `<org-dir>/tls/` and prints the CA fingerprint.
+  Plain HTTP stays on the original port, so old clients keep working during a
+  rollout.
+- In the client, tick **Use HTTPS** and enter the HTTPS port. The first
+  connection shows the server's fingerprint — compare it to the one printed on
+  the server console, then **Trust & connect**. The CA is pinned in the app's
+  user-data folder (`server-ca.pem`) and every later session verifies against
+  it. "Forget server identity" in Server settings clears it (e.g. after a
+  server reinstall).
+- CLI commands talk HTTPS too: pass `--url https://host:port --ca PATH` (or
+  set `$SOLIDSYNC_CA`) so `health` / `list` / `import` trust the server.
+
 ## Where data lives
 
 Everything is under the app's user-data folder (e.g. `%APPDATA%/SolidSync` on
@@ -96,8 +115,10 @@ Windows).
 ```
 userData/
 ├── config.json          # this machine's setup (name, mode, IP, port)
+├── server-ca.pem        # pinned server CA (HTTPS trust, client mode)
 ├── org/                 # host-mode org
 │   ├── solidsync.db      # metadata: projects, sections, parts, versions, statuses
+│   ├── tls/              # generated CA + server cert (when serving with --tls)
 │   └── repos/<projectId>/   # one git repo per project holding the file bytes
 └── mirror/              # client-mode local copies, one git repo per project
 ```
@@ -122,7 +143,7 @@ userData/
 │                              │  └───┬────────────────────┘ │
 └──────────────────────────────┼──────┼─────────────────────┘
                     host mode  │      │ client mode
-                    0.0.0.0    ▼      ▼ (http)
+                    0.0.0.0    ▼      ▼ (http/https)
                        ┌──────────────────────────┐
                        │  Express REST server      │
                        │  ├─ sql.js (SQLite)       │
@@ -132,8 +153,9 @@ userData/
 
 - **The server is the single source of truth.** The GUI never decides — it
   reflects and requests, the server answers.
-- Plain JSON over HTTP; no websockets. Clients poll `/api/health` every few
-  seconds and refetch the org snapshot when the revision number moves.
+- Plain JSON over HTTP (or HTTPS with `--tls`); no websockets. Clients poll
+  `/api/health` every few seconds and refetch the org snapshot when the
+  revision number moves.
 - On the server side the engine is the real git binary (init/add/commit/log/
   show) via `child_process` — reliable on the host, no CLI output to parse.
 - On the client side the mirror is embedded `isomorphic-git`, so no external

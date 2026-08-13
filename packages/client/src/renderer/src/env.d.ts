@@ -7,6 +7,10 @@ declare global {
       subscribe: (cb: (state: ClientState) => void) => () => void
       onUploadProgress: (cb: (p: UploadProgress) => void) => () => void
       saveOnboarding: (cfg: AppConfig) => Promise<unknown>
+      tlsProbe: (o: { serverIp: string; port: number }) => Promise<{ ok: boolean; fingerprint?: string; error?: string }>
+      tlsTrust: () => Promise<boolean>
+      tlsClear: () => Promise<boolean>
+      tlsStatus: () => Promise<{ trusted: boolean; fingerprint: string | null }>
       createProject: (name: string) => Promise<unknown>
       startMyCopy: (projectId: string) => Promise<unknown>
       createSection: (projectId: string, name: string) => Promise<unknown>

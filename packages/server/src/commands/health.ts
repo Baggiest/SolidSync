@@ -1,8 +1,8 @@
-import { ServerClient } from '../http-client'
+import { makeClient } from '../cli'
 import type { CommandOptions } from '../cli'
 
 export async function runHealth(o: CommandOptions): Promise<number> {
-  const client = new ServerClient(o.url, o.user)
+  const client = await makeClient(o)
   try {
     const h = await client.health()
     console.log(JSON.stringify(h, null, 2))

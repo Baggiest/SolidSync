@@ -2,6 +2,8 @@
 import os from 'node:os'
 import path from 'node:path'
 import { realpathSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { ServerClient } from './http-client'
 import { runServe } from './commands/serve'
 import { runInit } from './commands/init'
 import { runHealth } from './commands/health'
@@ -20,6 +22,9 @@ export interface CommandOptions {
   url: string
   user: string
   json: boolean
+  tls: boolean
+  tlsPort: number
+  ca: string
   project?: string
   section?: string
   set?: string
@@ -30,12 +35,22 @@ export function envOrDefault(key: string, fallback: string): string {
   return v && v.trim() !== '' ? v.trim() : fallback
 }
 
+/** Build a client for the client-ish commands, trusting the --ca cert if given. */
+export async function makeClient(o: CommandOptions): Promise<ServerClient> {
+  let ca: string | undefined
+  if (o.ca) ca = await readFile(o.ca, 'utf8')
+  return new ServerClient(o.url, o.user, ca)
+}
+
 function resolveOptions(raw: Record<string, string>): CommandOptions {
   const dir = raw.dir ?? envOrDefault('SOLIDSYNC_DIR', path.join(os.homedir(), '.solidsync'))
   const port = Number(raw.port ?? envOrDefault('SOLIDSYNC_PORT', '3020'))
   const host = raw.host ?? envOrDefault('SOLIDSYNC_HOST', '0.0.0.0')
   const name = raw.name ?? envOrDefault('SOLIDSYNC_NAME', 'Shop')
   const user = raw.user ?? envOrDefault('SOLIDSYNC_USER', 'you')
+  const tls = raw.tls === 'true' || envOrDefault('SOLIDSYNC_TLS', 'false') === 'true'
+  const tlsPort = Number(raw['tls-port'] ?? envOrDefault('SOLIDSYNC_TLS_PORT', '3443'))
+  const ca = raw.ca ?? envOrDefault('SOLIDSYNC_CA', '')
   const url = raw.url ?? `http://127.0.0.1:${port}`
   return {
     dir,
@@ -45,6 +60,9 @@ function resolveOptions(raw: Record<string, string>): CommandOptions {
     url,
     user,
     json: raw.json === 'true',
+    tls,
+    tlsPort,
+    ca,
     project: raw.project,
     section: raw.section,
     set: raw.set
@@ -77,6 +95,12 @@ Common options:
                   (default http://127.0.0.1:<port> from the settings above).
   --user NAME     Your name (default "you", or $SOLIDSYNC_USER).
   --json          Machine-readable output where supported.
+TLS:
+  --tls           Also serve HTTPS (on --tls-port). Generates a throwaway CA +
+                  server cert into <dir>/tls on first run; clients pin the CA.
+  --tls-port N    HTTPS port for serve (default 3443, or $SOLIDSYNC_TLS_PORT).
+  --ca PATH       CA certificate file for client-ish commands over https, so
+                  they trust a self-signed server (or $SOLIDSYNC_CA).
   -h, --help      Show this help.
 `
 

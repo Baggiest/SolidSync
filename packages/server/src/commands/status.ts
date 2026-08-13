@@ -1,5 +1,5 @@
 import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidsync/shared'
-import { ServerClient } from '../http-client'
+import { makeClient } from '../cli'
 import type { CommandOptions } from '../cli'
 
 function findPart(org: OrgSnapshot, frag: string): PartInfo | null {
@@ -18,7 +18,7 @@ export async function runStatus(o: CommandOptions, partId?: string): Promise<num
     console.error('usage: solidsync-server status PARTID [--set green|yellow|red] [--url URL]')
     return 1
   }
-  const client = new ServerClient(o.url, o.user)
+  const client = await makeClient(o)
   const org = await client.getOrg()
   const part = findPart(org, partId)
   if (!part) {

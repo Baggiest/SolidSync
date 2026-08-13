@@ -53,6 +53,7 @@ export interface AppConfig {
   name: string
   serverIp: string
   port: number
+  useTls: boolean
 }
 
 export type ConnectionState = 'connecting' | 'online' | 'offline'

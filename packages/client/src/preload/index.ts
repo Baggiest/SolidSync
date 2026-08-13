@@ -24,6 +24,13 @@ const api = {
   // onboarding
   saveOnboarding: (cfg: AppConfig): Promise<void> => ipcRenderer.invoke('onboarding:save', cfg),
 
+  // TLS trust (TOFU)
+  tlsProbe: (o: { serverIp: string; port: number }): Promise<{ ok: boolean; fingerprint?: string; error?: string }> =>
+    ipcRenderer.invoke('tls:probe', o),
+  tlsTrust: (): Promise<boolean> => ipcRenderer.invoke('tls:trust'),
+  tlsClear: (): Promise<boolean> => ipcRenderer.invoke('tls:clear'),
+  tlsStatus: (): Promise<{ trusted: boolean; fingerprint: string | null }> => ipcRenderer.invoke('tls:status'),
+
   // actions
   createProject: (name: string): Promise<unknown> => ipcRenderer.invoke('action:createProject', name),
   startMyCopy: (projectId: string): Promise<unknown> =>

@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises'
+import { randomBytes } from 'node:crypto'
 import path from 'node:path'
+import { fetch as undiciFetch, Agent, type RequestInit, type Response, type BodyInit } from 'undici'
 import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
 export class ApiError extends Error {}
@@ -30,15 +32,25 @@ async function parse<T>(res: Response): Promise<T> {
 /**
  * Minimal admin REST client, shared by the CLI commands and the API test suite.
  * The GUI has its own (richer) client inside the Electron app.
+ * Pass a CA PEM to talk to a self-signed HTTPS server.
  */
 export class ServerClient {
+  private readonly dispatcher?: Agent
+
   constructor(
     readonly baseUrl: string,
-    public user = 'admin'
-  ) {}
+    public user = 'admin',
+    caPem?: string
+  ) {
+    if (caPem) this.dispatcher = new Agent({ connect: { ca: [caPem] } })
+  }
 
   private url(p: string): string {
     return `${this.baseUrl}${p.startsWith('/') ? p : '/' + p}`
+  }
+
+  private req(p: string, init: RequestInit = {}): Promise<Response> {
+    return undiciFetch(this.url(p), { ...init, dispatcher: this.dispatcher } as RequestInit)
   }
 
   private jsonHeaders(): Record<string, string> {
@@ -46,17 +58,17 @@ export class ServerClient {
   }
 
   async health(): Promise<{ ok: boolean; orgName: string; rev: number; serverTime: string; version: string }> {
-    const res = await fetch(this.url('/api/health'), { signal: AbortSignal.timeout(8000) })
+    const res = await this.req('/api/health', { signal: AbortSignal.timeout(8000) })
     return parse(res)
   }
 
   async getOrg(): Promise<OrgSnapshot> {
-    const res = await fetch(this.url('/api/org'), { signal: AbortSignal.timeout(15000) })
+    const res = await this.req('/api/org', { signal: AbortSignal.timeout(15000) })
     return parse<OrgSnapshot>(res)
   }
 
   async createProject(name: string): Promise<string> {
-    const body = await fetch(this.url('/api/projects'), {
+    const body = await this.req('/api/projects', {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name })
@@ -65,7 +77,7 @@ export class ServerClient {
   }
 
   async createSection(projectId: string, name: string): Promise<string> {
-    const body = await fetch(this.url(`/api/projects/${projectId}/sections`), {
+    const body = await this.req(`/api/projects/${projectId}/sections`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name })
@@ -74,7 +86,7 @@ export class ServerClient {
   }
 
   async setWorkStatus(partId: string, workStatus: WorkStatus): Promise<void> {
-    await fetch(this.url(`/api/parts/${partId}/status`), {
+    await this.req(`/api/parts/${partId}/status`, {
       method: 'PUT',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ workStatus })
@@ -82,7 +94,7 @@ export class ServerClient {
   }
 
   async branchProject(opts: { projectId: string; name?: string }): Promise<{ projectId: string; name: string }> {
-    const body = await fetch(this.url(`/api/projects/${opts.projectId}/copy`), {
+    const body = await this.req(`/api/projects/${opts.projectId}/copy`, {
       method: 'POST',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ name: opts.name ?? '' })
@@ -92,12 +104,25 @@ export class ServerClient {
 
   private async multipart(p: string, filePath: string, fields: Record<string, string>): Promise<ServerBody> {
     const buf = await readFile(filePath)
-    const form = new FormData()
-    form.append('file', new Blob([new Uint8Array(buf)], { type: 'application/octet-stream' }), path.basename(filePath))
-    for (const [k, v] of Object.entries(fields)) form.append(k, v)
-    return fetch(this.url(p), { method: 'POST', headers: { 'X-User': this.user }, body: form }).then((r) =>
-      parse<ServerBody>(r)
+    const boundary = `----solidsync-${randomBytes(12).toString('hex')}`
+    const chunks: Buffer[] = []
+    for (const [k, v] of Object.entries(fields)) {
+      chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`))
+    }
+    chunks.push(
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${path.basename(filePath)}"\r\nContent-Type: application/octet-stream\r\n\r\n`
+      )
     )
+    chunks.push(buf, Buffer.from(`\r\n--${boundary}--\r\n`))
+    return this.req(p, {
+      method: 'POST',
+      headers: {
+        'X-User': this.user,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`
+      },
+      body: Buffer.concat(chunks) as unknown as BodyInit
+    }).then((r) => parse<ServerBody>(r))
   }
 
   async uploadNew(opts: {
@@ -115,8 +140,8 @@ export class ServerClient {
   }
 
   async downloadBytes(projectId: string, partId: string, versionId: string): Promise<Buffer> {
-    const res = await fetch(
-      this.url(`/api/projects/${projectId}/parts/${partId}/versions/${versionId}/file`),
+    const res = await this.req(
+      `/api/projects/${projectId}/parts/${partId}/versions/${versionId}/file`,
       { signal: AbortSignal.timeout(120000) }
     )
     if (!res.ok) throw new ApiError(`download failed (HTTP ${res.status})`)

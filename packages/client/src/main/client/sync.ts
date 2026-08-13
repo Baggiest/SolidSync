@@ -1,4 +1,5 @@
 import path from 'node:path'
+import type { Agent } from 'undici'
 import { SolidSyncApi } from './api'
 import { Mirror, type DesiredFile } from './mirror'
 import type { ConnectionState, Health, OrgSnapshot, SyncState } from '@solidsync/shared'
@@ -52,8 +53,13 @@ export class SyncService {
   }
 
   // allowed to build after user set the endpoint
-  setEndpoint(serverIp: string, port: number): void {
-    this.api.baseUrl = `http://${serverIp}:${port}`
+  setEndpoint(serverIp: string, port: number, useTls = false): void {
+    this.api.baseUrl = `${useTls ? 'https' : 'http'}://${serverIp}:${port}`
+  }
+
+  /** Pin the API client to a CA-trusted TLS agent. Call before setEndpoint/start. */
+  setTrust(dispatcher: Agent): void {
+    this.api.dispatcher = dispatcher
   }
 
   // ---- event plumbing -------------------------------------------------------

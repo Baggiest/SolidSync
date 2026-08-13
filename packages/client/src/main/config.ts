@@ -8,7 +8,8 @@ const DEFAULTS: AppConfig = {
   configured: false,
   name: '',
   serverIp: '',
-  port: 0
+  port: 0,
+  useTls: false
 }
 
 export class ConfigStore {
@@ -26,7 +27,8 @@ export class ConfigStore {
         configured: parsed.configured === true,
         name: typeof parsed.name === 'string' ? parsed.name : '',
         serverIp: typeof parsed.serverIp === 'string' ? parsed.serverIp : '',
-        port: Number.isFinite(parsed.port) ? Number(parsed.port) : DEFAULT_PORT
+        port: Number.isFinite(parsed.port) ? Number(parsed.port) : DEFAULT_PORT,
+        useTls: parsed.useTls === true
       }
     } catch {
       return { ...DEFAULTS }

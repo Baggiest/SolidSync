@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import path from 'node:path'
 import { ConfigStore } from './config'
 import { Session } from './session'
+import { TlsTrust, fetchServerCa } from './tls'
 import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
 import { DEFAULT_PORT } from '@solidsync/shared'
 
@@ -9,10 +10,11 @@ const session = new Session()
 const configStore = new ConfigStore()
 let mainWindow: BrowserWindow | null = null
 let currentConfig: AppConfig | null = null
+let pendingTrust: { pem: string; fingerprint: string } | null = null
 const userDataRoot = (): string => app.getPath('userData')
 
 function buildState(): ClientState {
-  const cfg = currentConfig ?? { configured: false, name: '', serverIp: '', port: 0 }
+  const cfg = currentConfig ?? { configured: false, name: '', serverIp: '', port: 0, useTls: false }
   const sync = session.sync?.info
   let health = null as ClientState['health']
   let org = null as ClientState['org']
@@ -104,12 +106,40 @@ ipcMain.handle('onboarding:save', async (_e, cfg: AppConfig) => {
     configured: true,
     name: String(cfg.name ?? '').trim() || 'someone',
     port: Math.max(1, Math.min(65535, Number(cfg.port) || DEFAULT_PORT)),
-    serverIp: cleanerIp(String(cfg.serverIp ?? '').trim())
+    serverIp: cleanerIp(String(cfg.serverIp ?? '').trim()),
+    useTls: cfg.useTls === true
   }
   await configStore.save(clean)
   await boot(clean)
   return true
 })
+
+// ---- TLS trust (TOFU) ------------------------------------------------------
+
+ipcMain.handle('tls:probe', async (_e, o: { serverIp: string; port: number }) => {
+  try {
+    const { pem, fingerprint } = await fetchServerCa(String(o.serverIp ?? '').trim(), Number(o.port) || 3443)
+    pendingTrust = { pem, fingerprint }
+    return { ok: true, fingerprint }
+  } catch (err) {
+    pendingTrust = null
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+})
+
+ipcMain.handle('tls:trust', async () => {
+  if (!pendingTrust) throw new Error('no server identity pending — run tls:probe first')
+  await new TlsTrust(userDataRoot()).storeCaPem(pendingTrust.pem)
+  pendingTrust = null
+  return true
+})
+
+ipcMain.handle('tls:clear', async () => {
+  await new TlsTrust(userDataRoot()).clearCaPem()
+  return true
+})
+
+ipcMain.handle('tls:status', async () => new TlsTrust(userDataRoot()).status())
 
 ipcMain.handle('action:createProject', async (_e, name: string) => {
   const s = await requireOnline()

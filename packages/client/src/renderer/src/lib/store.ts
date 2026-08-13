@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { ClientState, UploadProgress } from '@solidsync/shared'
 
 export const EMPTY_STATE: ClientState = {
-  appConfig: { configured: false, name: '', serverIp: '', port: 1 },
+  appConfig: { configured: false, name: '', serverIp: '', port: 1, useTls: false },
   connection: 'connecting',
   syncState: 'out-of-sync',
   org: null,
