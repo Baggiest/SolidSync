@@ -21,6 +21,7 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950/90 px-3">
       <div className="flex items-center gap-2">
+        <img src="/superevil-globe.png" alt="SolidSync globe" className="h-12 w-6 object-contain" />
         <span className="text-sm font-semibold tracking-tight text-zinc-100">SolidSync</span>
         {org && (
           <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-medium text-zinc-400">

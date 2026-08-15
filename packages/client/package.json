@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "SolidSync GUI: syncs your files, thats it, takes 5 mins to set up",
   "author": "Pyrobotics",
-  "homepage": "https://github.com/pyrobotics/solidsync",
+  "homepage": "https://github.com/baggiest/solidsync",
   "desktopName": "solidsync",
   "main": "./out/main/index.js",
   "scripts": {
