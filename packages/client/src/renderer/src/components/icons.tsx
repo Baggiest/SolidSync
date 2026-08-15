@@ -96,3 +96,21 @@ export function IconRestore(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IconDownload(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M8 2.5v8" />
+      <path d="m4.5 7 3.5 3.5L11.5 7" />
+      <path d="M3 13.5h10" />
+    </svg>
+  )
+}
+
+export function IconStop(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+    </svg>
+  )
+}
+

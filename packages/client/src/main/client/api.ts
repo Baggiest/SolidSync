@@ -8,6 +8,13 @@ import type { OrgSnapshot, WorkStatus } from '@solidsync/shared'
 
 export class ApiError extends Error {}
 
+/** Thrown when a download is aborted by the user; treated as a quiet stop. */
+export class DownloadCancelledError extends ApiError {
+  constructor() {
+    super('download cancelled')
+  }
+}
+
 async function parse<T>(res: Response): Promise<T> {
   const text = await res.text()
   if (res.ok) {
@@ -197,14 +204,37 @@ export class SolidSyncApi {
     return { partId: body.partId ?? '', versionId: body.versionId ?? '' }
   }
 
-  /** Raw bytes of one versioned file. */
-  async downloadBytes(projectId: string, partId: string, versionId: string): Promise<Buffer> {
+  /** Raw bytes of one versioned file, streamed so progress + cancel work. */
+  async downloadFile(
+    projectId: string,
+    partId: string,
+    versionId: string,
+    opts: { onProgress?: (received: number, total: number) => void; signal?: AbortSignal } = {}
+  ): Promise<Buffer> {
+    const { onProgress, signal } = opts
+    const timeout = AbortSignal.timeout(120000)
+    const combined = signal ? AbortSignal.any([signal, timeout]) : timeout
     const res = await this.req(
       `/api/projects/${projectId}/parts/${partId}/versions/${versionId}/file`,
-      { signal: AbortSignal.timeout(120000) }
+      { signal: combined }
     )
     if (!res.ok) throw new ApiError(`download failed (HTTP ${res.status})`)
-    return Buffer.from(await res.arrayBuffer())
+    const total = Number(res.headers.get('content-length')) || 0
+    if (!res.body) throw new ApiError('download failed: no response body')
+    const chunks: Uint8Array[] = []
+    let received = 0
+    try {
+      for await (const chunk of res.body as AsyncIterable<Uint8Array>) {
+        if (combined.aborted) throw new DownloadCancelledError()
+        chunks.push(chunk)
+        received += chunk.length
+        onProgress?.(received, total)
+      }
+    } catch (err) {
+      if (combined.aborted) throw new DownloadCancelledError()
+      throw err
+    }
+    return Buffer.concat(chunks)
   }
 }
 

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import type { DragEvent } from 'react'
 import type { PartInfo, SectionInfo, SyncState } from '@solidsync/shared'
-import { SyncBadge, WorkBadge } from './badges'
-import { IconFile, IconFolder } from './icons'
+import { DownloadBadge, SyncBadge, WorkBadge } from './badges'
+import { IconDownload, IconFile, IconFolder, IconStop } from './icons'
 import { formatSince } from '../lib/format'
+import { downloadPercent, versionDownloadStatus } from '../lib/status'
+import { cancelDownload, downloadVersionNow, useClientState, useDownloads } from '../lib/store'
 
 const GRID =
-  'grid-cols-[minmax(130px,110px)_minmax(160px,1fr)_80px_84px_150px_150px_110px]'
+  'grid-cols-[minmax(130px,110px)_minmax(160px,1fr)_80px_84px_150px_110px_150px_110px]'
 
 export function PartTable(props: {
   section: SectionInfo
@@ -14,8 +16,11 @@ export function PartTable(props: {
   syncState: SyncState
   onPick: (partId: string) => void
   onDropVersion: (part: PartInfo, filePath: string) => void
+  onError: (msg: string) => void
 }) {
   const [draggingRow, setDraggingRow] = useState<string | null>(null)
+  const downloaded = useClientState().downloaded
+  const inFlight = useDownloads()
 
   if (props.section.parts.length === 0) {
     return (
@@ -29,6 +34,22 @@ export function PartTable(props: {
     )
   }
 
+  const downloadHead = (part: PartInfo): void => {
+    if (!part.head) return
+    const head = part.head
+    const version = part.versions.find((v) => v.id === head)
+    void (async () => {
+      const err = await downloadVersionNow({
+        projectId: part.projectId,
+        sectionId: part.sectionId,
+        partId: part.id,
+        versionId: head,
+        fileName: version?.fileName ?? part.name
+      })
+      if (err) props.onError(err)
+    })()
+  }
+
   return (
     <div className="flex flex-col">
       <div
@@ -39,6 +60,7 @@ export function PartTable(props: {
         <span>Head</span>
         <span>Sync</span>
         <span>Work</span>
+        <span>Local</span>
         <span>Modified</span>
         <span>By</span>
       </div>
@@ -46,6 +68,8 @@ export function PartTable(props: {
       {props.section.parts.map((part) => {
         const selected = part.id === props.selectedPartId
         const dragging = draggingRow === part.id
+        const headStatus = versionDownloadStatus(part.head, downloaded, inFlight)
+        const headProgress = part.head ? inFlight[part.head] : null
         return (
           <div
             key={part.id}
@@ -94,6 +118,46 @@ export function PartTable(props: {
             </span>
             <span>
               <WorkBadge status={part.workStatus} />
+            </span>
+            <span className="flex items-center gap-1.5">
+              {part.head ? (
+                headStatus === 'downloading' ? (
+                  <>
+                    <button
+                      title="Cancel download"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        cancelDownload(part.head!)
+                      }}
+                      className="rounded p-1 text-amber-400 hover:bg-zinc-800"
+                    >
+                      <IconStop className="h-3.5 w-3.5" />
+                    </button>
+                    <DownloadBadge
+                      status="downloading"
+                      percent={headProgress ? downloadPercent(headProgress) : undefined}
+                    />
+                  </>
+                ) : headStatus === 'downloaded' ? (
+                  <DownloadBadge status="downloaded" />
+                ) : (
+                  <>
+                    <button
+                      title="Download to my drive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadHead(part)
+                      }}
+                      className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                    >
+                      <IconDownload className="h-3.5 w-3.5" />
+                    </button>
+                    <DownloadBadge status="not-downloaded" />
+                  </>
+                )
+              ) : (
+                <span className="text-zinc-600">—</span>
+              )}
             </span>
             <span className="text-zinc-400">{formatSince(part.lastModified)}</span>
             <span className="truncate text-zinc-400">{part.lastModifiedBy}</span>

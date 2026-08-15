@@ -1,4 +1,4 @@
-import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 declare global {
   interface Window {
@@ -6,6 +6,7 @@ declare global {
       getState: () => Promise<ClientState>
       subscribe: (cb: (state: ClientState) => void) => () => void
       onUploadProgress: (cb: (p: UploadProgress) => void) => () => void
+      onDownloadProgress: (cb: (p: DownloadProgress) => void) => () => void
       saveOnboarding: (cfg: AppConfig) => Promise<unknown>
       tlsProbe: (o: { serverIp: string; port: number }) => Promise<{ ok: boolean; fingerprint?: string; error?: string }>
       tlsTrust: () => Promise<boolean>
@@ -23,6 +24,9 @@ declare global {
       setPartName: (partId: string, name: string) => Promise<unknown>
       refresh: () => Promise<unknown>
       openVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => Promise<unknown>
+      revealVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => Promise<unknown>
+      downloadVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => Promise<unknown>
+      cancelDownload: (versionId: string) => Promise<unknown>
       revealRoot: () => Promise<unknown>
       pickFile: () => Promise<string | null>
       getPathForFile: (file: File) => string

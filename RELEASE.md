@@ -25,10 +25,10 @@ rm -rf packages/client/dist packages/client/out packages/server/dist
 
 ## 3. Build the desktop app 
 
-(NOT IMPLEMENTED YET TODO)`build:all` chains `electron-vite build` + `electron-builder` for Windows AND Linux:
+`build:all` chains `electron-vite build` + `electron-builder` for Windows AND Linux:
 
 ```bash
-# npm run build:all
+npm run build:all
 ```
 
 Or pick one platform:

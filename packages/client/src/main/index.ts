@@ -4,8 +4,9 @@ import iconPath from '../../build/icon.png?asset'
 import { ConfigStore } from './config'
 import { Session } from './session'
 import { TlsTrust, fetchServerCa } from './tls'
-import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
 import { DEFAULT_PORT } from '@solidsync/shared'
+import { DownloadCancelledError } from './client/sync'
 
 const session = new Session()
 const configStore = new ConfigStore()
@@ -23,6 +24,7 @@ function buildState(): ClientState {
   let syncState = 'out-of-sync' as ClientState['syncState']
   let error = null as string | null
   let serverRev = null as number | null
+  let downloaded = [] as string[]
   if (sync) {
     health = sync.health
     org = sync.org
@@ -30,9 +32,11 @@ function buildState(): ClientState {
     syncState = sync.syncState
     error = sync.error
     serverRev = sync.serverRev
+    downloaded = sync.downloaded
   }
   return {
     appConfig: cfg, health, org, connection, syncState, error, serverRev,
+    downloaded,
     mirrorRoot: session.sync?.mirrorRootDisplay() ?? null
   }
 }
@@ -46,6 +50,12 @@ function pushState(): void {
 function pushUploadProgress(p: UploadProgress): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('app:upload', p)
+  }
+}
+
+function pushDownloadProgress(p: DownloadProgress): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('app:download', p)
   }
 }
 
@@ -180,6 +190,16 @@ const uploadProgress = (fileName: string) => {
   }
 }
 
+const downloadProgress = (versionId: string, fileName: string) => {
+  let last = 0
+  return (received: number, total: number): void => {
+    const now = Date.now()
+    if (now - last < 100) return
+    last = now
+    pushDownloadProgress({ versionId, fileName, sent: received, total, done: false })
+  }
+}
+
 ipcMain.handle('action:throwIn', async (_e, opts: { projectId: string; sectionId: string; filePath: string; parentId?: string | null }) => {
   const s = await requireOnline()
   await s.sync!.throwIn(opts, uploadProgress(path.basename(opts.filePath)))
@@ -225,7 +245,41 @@ ipcMain.handle('action:refresh', async () => {
 ipcMain.handle('action:openVersion', async (_e, opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => {
   const s = await requireOnline()
   const p = await s.sync!.versionLocalPath(opts.projectId, opts.sectionId, opts.partId, opts.versionId, opts.fileName)
-  if (p) shell.openPath(p)
+  if (!p) throw new Error('Download the file first')
+  shell.openPath(p)
+  pushState()
+})
+
+ipcMain.handle('action:revealVersion', async (_e, opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => {
+  const s = await requireOnline()
+  const p = await s.sync!.versionLocalPath(opts.projectId, opts.sectionId, opts.partId, opts.versionId, opts.fileName)
+  if (!p) throw new Error('Download the file first')
+  shell.showItemInFolder(p)
+  pushState()
+})
+
+ipcMain.handle('action:downloadVersion', async (_e, opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }) => {
+  const s = await requireOnline()
+  const settle = (): void =>
+    pushDownloadProgress({ versionId: opts.versionId, fileName: opts.fileName, sent: 0, total: 0, done: true })
+  try {
+    await s.sync!.downloadVersion(opts, downloadProgress(opts.versionId, opts.fileName))
+  } catch (err) {
+    settle()
+    if (err instanceof DownloadCancelledError) {
+      pushState()
+      return
+    }
+    pushState()
+    throw err
+  }
+  settle()
+  pushState()
+})
+
+ipcMain.handle('action:cancelDownload', async (_e, versionId: string) => {
+  const s = await requireOnline()
+  s.sync!.cancelDownload(String(versionId ?? ''))
   pushState()
 })
 

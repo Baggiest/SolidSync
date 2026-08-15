@@ -1,4 +1,4 @@
-import type { SyncState, WorkStatus } from '@solidsync/shared'
+import type { DownloadStatus, SyncState, WorkStatus } from '@solidsync/shared'
 import { SYNC_META, WORK_META } from '../lib/status'
 
 export function WorkBadge({ status }: { status: WorkStatus }) {
@@ -17,6 +17,20 @@ export function WorkBadge({ status }: { status: WorkStatus }) {
 export function SyncBadge({ state }: { state: SyncState }) {
   const meta = SYNC_META[state]
   return <span className={`inline-flex rounded border px-1.5 py-0.5 text-[11px] font-medium ${meta.pill}`}>{meta.label}</span>
+}
+
+const DOWNLOAD_META: Record<DownloadStatus, { label: string; pill: string }> = {
+  downloaded: { label: 'On drive', pill: 'bg-emerald-950 text-emerald-400 border-emerald-800' },
+  downloading: { label: 'Downloading', pill: 'bg-sky-950 text-sky-300 border-sky-800 animate-pulse' },
+  'not-downloaded': { label: 'Not on drive', pill: 'bg-zinc-900 text-zinc-500 border-zinc-800' },
+  failed: { label: 'Failed', pill: 'bg-red-950 text-red-400 border-red-800' }
+}
+
+export function DownloadBadge({ status, percent }: { status: DownloadStatus; percent?: number }) {
+  const meta = DOWNLOAD_META[status]
+  const label =
+    status === 'downloading' && percent != null ? `Downloading ${percent}%` : meta.label
+  return <span className={`inline-flex rounded border px-1.5 py-0.5 text-[11px] font-medium ${meta.pill}`}>{label}</span>
 }
 
 export function WorkStatusControl({ status, onChange, disabled }: { status: WorkStatus; onChange: (s: WorkStatus) => void; disabled?: boolean }) {

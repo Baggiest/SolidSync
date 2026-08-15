@@ -116,10 +116,14 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
   opens it.
 - **CLI ↔ GUI parity** — anything the GUI can do over HTTP, the CLI can, so
   server-side maintenance doesn't require a display.
-- **Client stays offline-capable** — local isomorphic-git mirror, reconcile on
-  reconnect. The mirror is a strict mirror of the server: content that vanishes
-  from the server (e.g. a deleted project) is pruned from the mirror and
-  disappears from the GUI on the next sync.
+- **Client stays offline-capable** — local isomorphic-git mirror; the sync
+  layer only fetches the org *structure* (projects/sections/parts/versions)
+  and prunes anything that vanished from the server (e.g. a deleted project),
+  so deleted content disappears from every client's GUI and mirror on the next
+  sync. Version *files* are pulled on demand per version via a Download button
+  (with progress + cancel), tracked by a per-version download status on the
+  client. Once on drive, a file opens/browses even while offline; a submitted
+  version is immutable, so downloaded files never re-sync.
 
 ## 6. Client changes (strip the host mode)
 
@@ -137,10 +141,14 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
   **Archived** section in the sidebar lists archived projects with a restore
   button. The archived flag is server state (`projects.archived`, schema v3),
   read straight from the org snapshot — the client never decides what's
-  archived. Archived projects stay in the snapshot (still mirrored and
-  browsable), they just move to a different sidebar section.
+  archived. Archived projects stay in the snapshot (still browsable, files
+  already on a client's drive stay on drive), they just move to a different
+  sidebar section.
 - All part/section/version/work-status actions go over HTTP to the server,
-  exactly as today.
+  exactly as today. Version file downloads stream over HTTP too (`downloadFile`
+  in `api.ts`), with byte-count progress and an abort signal backing the
+  Download / Cancel buttons; `ClientState` carries the set of version ids
+  present on the local drive (`downloaded`).
 
 ## 7. Shared package
 

@@ -32,6 +32,7 @@ Each Part has:
 | Head | Tag marking the currently-active version of this part |
 | History | Full linear log — every version ever submitted, in order |
 | Sync status | Is this local machine current with the server? (Section 5) |
+| Download status | Is this version's file on this machine's drive? (Section 5) |
 | Work status | Is this part safe to touch, per the team? (Section 5) |
 | Last modified | Timestamp of most recent change |
 | Last modified by | Who made that change |
@@ -56,25 +57,39 @@ No required fields beyond the file itself. Every prompt past step 4 is skippable
 
 ---
 
-## 5. The Two Status Types
+## 5. The Three Status Types
 
-This is a Dropbox-prototype-era distinction, and it's important the two never get merged into one indicator — they answer different questions and different people act on them.
+There are three independent statuses. None ever gets collapsed into another —
+they answer different questions and different people act on them.
 
-| | **Sync status** | **Work status** |
-|---|---|---|
-| Question it answers | Is my local copy current with the server? | Is this part safe for a human to touch right now? |
-| Who sets it | The program, automatically | The part owner, manually |
-| States | Synced / Syncing / Out of sync | Red / Yellow / Green |
-| Where it lives | Machine-level signal, tied to connection | Part-level signal, tied to team coordination |
+| | **Sync status** | **Work status** | **Download status** |
+|---|---|---|---|
+| Question it answers | Is my local copy of the org structure current with the server? | Is this part safe for a human to touch right now? | Is this version's file on this machine's drive? |
+| Who sets it | The program, automatically | The part owner, manually | The program, from the user's Download button |
+| States | Current / Syncing / Out of sync / Offline | Red / Yellow / Green | On drive / Downloading / Not on drive |
+| Where it lives | Machine-level signal, tied to connection | Part-level signal, tied to team coordination | Version-level signal, per saved file |
 
 **Work status meanings:**
 - 🔴 **Red** — do not work on this
 - 🟡 **Yellow** — ask the owner before working on this
 - 🟢 **Green** — ready to be worked on
 
-Keeping these separate matters because a part can be perfectly synced but flagged red (owner is mid-change and just hasn't shared it yet), or out-of-sync but green (network hiccup, nothing wrong with the part itself). Collapsing them into one light would hide one of those two facts every time.
+**Sync status vs download status:** the app-level sync only keeps the *structure*
+current — projects, sections, parts, versions, heads. It never pulls file
+contents automatically. Each saved version's file is pulled onto the machine's
+drive on demand via a **Download** button, which shows progress and a Cancel
+button while it runs. "Open" and "Show in file browser" only become available
+once that version is on drive (and keep working offline afterwards). Because a
+submitted version is immutable, a downloaded file never needs re-syncing.
 
-Both statuses display directly in the section listing — not one click deeper.
+Keeping these separate matters because a part can be perfectly synced but
+flagged red (owner is mid-change and just hasn't shared it yet), out-of-sync
+but green (network hiccup, nothing wrong with the part itself), or synced but
+not on this drive yet (you can see it in the listing without having pulled the
+file). Collapsing any of them into one light would hide one of those facts
+every time.
+
+All three statuses display directly in the section listing — not one click deeper.
 
 ---
 
@@ -98,8 +113,9 @@ the sidebar — a soft state, not a delete.
 - **Restore** is a single click too — archived projects come back to the active
   list with their sections, parts, versions, statuses, and head pointers intact.
 - **Archiving changes nothing about the data.** The project stays on the server,
-  fully browsable, still mirrored by every client (archived projects remain in
-  the org snapshot with an `archived` flag). It is purely a matter of
+  fully browsable, still present in every client's listing (archived projects
+  remain in the org snapshot with an `archived` flag, and any versions already
+  on a client's drive stay on drive). It is purely a matter of
   organization: out of the way, not gone.
 - The archived flag is server state (`projects.archived`), set through the API
   (`POST /api/projects/:id/archive` and `/api/projects/:id/unarchive`) and the

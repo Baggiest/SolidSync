@@ -6,6 +6,11 @@ export type WorkStatus = 'red' | 'yellow' | 'green'
 // server. Set by the program, never by a person.
 export type SyncState = 'synced' | 'syncing' | 'out-of-sync' | 'offline'
 
+// Whether one version's file exists on this machine's drive. Independent of
+// SyncState: the app-level sync only fetches metadata; version files are
+// pulled on demand. Set by the program, never by a person.
+export type DownloadStatus = 'not-downloaded' | 'downloading' | 'downloaded' | 'failed'
+
 export interface VersionInfo {
   id: string
   partId: string
@@ -84,6 +89,17 @@ export interface UploadProgress {
   done: boolean
 }
 
+// Progress of an in-flight file download from the server to the client mirror.
+export interface DownloadProgress {
+  versionId: string
+  fileName: string
+  sent: number
+  total: number
+  // sent once the download settles (finished, cancelled, or failed) so the UI
+  // can drop the in-flight entry.
+  done: boolean
+}
+
 export interface ClientState {
   appConfig: AppConfig
   connection: ConnectionState
@@ -94,4 +110,6 @@ export interface ClientState {
   health: Health | null
   // the local mirror folder the user can browse
   mirrorRoot: string | null
+  // version ids whose files exist on this machine's drive (per-part downloads)
+  downloaded: string[]
 }

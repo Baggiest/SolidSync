@@ -1,7 +1,8 @@
 {
   "name": "solidsync-monorepo",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "private": true,
+  "author": "Mani E. Sohi",
   "description": "Shop-floor part filer: one headless server, many Electron clients, on a local network.",
   "workspaces": [
     "packages/*"

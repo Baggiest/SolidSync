@@ -107,6 +107,7 @@ export default function SectionContent(props: {
           selectedPartId={props.selectedPartId}
           syncState={props.syncState}
           onPick={props.onPickPart}
+          onError={props.onError}
           onDropVersion={async (part, filePath) => {
             const sep = filePath.replace(/\\/g, '/')
             setSaving(sep.split('/').pop() ?? filePath)

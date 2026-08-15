@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { AppConfig, ClientState, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 const api = {
   // state
@@ -18,6 +18,15 @@ const api = {
     ipcRenderer.on('app:upload', listener)
     return () => {
       ipcRenderer.removeListener('app:upload', listener)
+    }
+  },
+
+  // download progress
+  onDownloadProgress: (cb: (p: DownloadProgress) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, p: DownloadProgress): void => cb(p)
+    ipcRenderer.on('app:download', listener)
+    return () => {
+      ipcRenderer.removeListener('app:download', listener)
     }
   },
 
@@ -54,6 +63,11 @@ const api = {
   refresh: (): Promise<unknown> => ipcRenderer.invoke('action:refresh'),
   openVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }): Promise<unknown> =>
     ipcRenderer.invoke('action:openVersion', opts),
+  revealVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }): Promise<unknown> =>
+    ipcRenderer.invoke('action:revealVersion', opts),
+  downloadVersion: (opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string }): Promise<unknown> =>
+    ipcRenderer.invoke('action:downloadVersion', opts),
+  cancelDownload: (versionId: string): Promise<unknown> => ipcRenderer.invoke('action:cancelDownload', versionId),
   revealRoot: (): Promise<unknown> => ipcRenderer.invoke('action:revealRoot'),
   pickFile: (): Promise<string | null> => ipcRenderer.invoke('action:pickFile'),
 

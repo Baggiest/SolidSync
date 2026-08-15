@@ -1,10 +1,13 @@
 import path from 'node:path'
 import type { Agent } from 'undici'
-import { SolidSyncApi } from './api'
-import { Mirror, type DesiredFile } from './mirror'
+import { SolidSyncApi, DownloadCancelledError } from './api'
+import { Mirror } from './mirror'
 import type { ConnectionState, Health, OrgSnapshot, SyncState } from '@solidsync/shared'
 
 export type { OrgSnapshot }
+
+/** Thrown when a download is aborted by the user; treated as a quiet stop. */
+export { DownloadCancelledError }
 
 export interface SyncStateInfo {
   connection: ConnectionState
@@ -13,6 +16,7 @@ export interface SyncStateInfo {
   serverRev: number | null
   error: string | null
   health: Health | null
+  downloaded: string[]
 }
 
 type Listener = (state: SyncStateInfo) => void
@@ -38,8 +42,12 @@ export class SyncService {
     org: null,
     serverRev: null,
     error: null,
-    health: null
+    health: null,
+    downloaded: []
   }
+
+  private activeDownloads = new Map<string, AbortController>()
+  private downloadedIds = new Set<string>()
 
   constructor(
     userName: string,
@@ -145,22 +153,14 @@ export class SyncService {
     for (const id of local) {
       if (!live.has(id)) await this.mirror.removeProject(id)
     }
+    // Version files are immutable and pulled on demand — never auto-downloaded.
+    // The only sync here is pruning files whose part/version no longer exists
+    // on the server (the server is the source of truth).
     for (const project of org.projects) {
       await this.mirror.ensureProject(project.id)
       const desired = Mirror.desiredFiles(project)
       const index = await this.mirror.loadIndex(project.id)
-
-      const have = new Set(Object.keys(index.files))
-      const want = new Map<string, DesiredFile>()
-      for (const f of desired) want.set(f.rel, f)
-
-      for (const f of desired) {
-        const known = index.files[f.rel]
-        if (have.has(f.rel) && known?.versionId === f.versionId && known.size === f.size) continue
-        const bytes = await this.api.downloadBytes(project.id, f.partId, f.versionId)
-        await this.mirror.storeFile(project.id, f.rel, bytes, `Save a version of ${f.fileName}`)
-        index.files[f.rel] = { versionId: f.versionId, size: f.size }
-      }
+      const want = new Set(desired.map((f) => f.rel))
       for (const rel of Object.keys(index.files)) {
         if (!want.has(rel)) {
           await this.mirror.removeFile(project.id, rel)
@@ -170,6 +170,45 @@ export class SyncService {
       index.rev = org.rev
       await this.mirror.saveIndex(project.id, index)
     }
+    await this.refreshDownloaded()
+  }
+
+  /** Re-read which version ids exist on disk and publish them on `info`. */
+  private async refreshDownloaded(): Promise<void> {
+    this.downloadedIds = new Set(await this.mirror.downloadedVersionIds())
+    this.info.downloaded = [...this.downloadedIds]
+  }
+
+  /** Pull one version's file into the local mirror, streaming progress. */
+  async downloadVersion(
+    opts: { projectId: string; sectionId: string; partId: string; versionId: string; fileName: string },
+    onProgress?: (received: number, total: number) => void
+  ): Promise<void> {
+    if (this.downloadedIds.has(opts.versionId)) return
+    if (this.activeDownloads.has(opts.versionId)) return
+    const controller = new AbortController()
+    this.activeDownloads.set(opts.versionId, controller)
+    try {
+      const { versionRelPath, partExt } = await import('./mirror')
+      const rel = versionRelPath(opts.sectionId, opts.partId, opts.versionId, partExt(opts.fileName))
+      const bytes = await this.api.downloadFile(opts.projectId, opts.partId, opts.versionId, {
+        onProgress,
+        signal: controller.signal
+      })
+      await this.mirror.storeFile(opts.projectId, rel, bytes, `Download ${opts.fileName}`)
+      const index = await this.mirror.loadIndex(opts.projectId)
+      index.files[rel] = { versionId: opts.versionId, size: bytes.length }
+      await this.mirror.saveIndex(opts.projectId, index)
+      this.downloadedIds.add(opts.versionId)
+      this.info.downloaded = [...this.downloadedIds]
+    } finally {
+      this.activeDownloads.delete(opts.versionId)
+    }
+  }
+
+  /** Abort an in-flight download; the running downloadVersion resolves quietly. */
+  cancelDownload(versionId: string): void {
+    this.activeDownloads.get(versionId)?.abort()
   }
 
   // ---- server actions (then refresh) -----------------------------------------
@@ -220,19 +259,17 @@ export class SyncService {
     await this.act(() => this.api.setPartName(partId, name))
   }
 
-  /** Local absolute path of a mirrored version file (for "Open file"). */
+  /**
+   * Local absolute path of a mirrored version file, or null if it isn't on
+   * this machine's drive yet. Never downloads on demand — call downloadVersion
+   * first (the UI only offers Open/Show once the file is downloaded).
+   */
   async versionLocalPath(projectId: string, sectionId: string, partId: string, versionId: string, fileName: string): Promise<string | null> {
     const { versionRelPath, partExt } = await import('./mirror')
     const rel = versionRelPath(sectionId, partId, versionId, partExt(fileName))
     const abs = this.mirror.abs(projectId, rel)
     if (await this.mirror.isTracked(projectId, rel)) return abs
-    // not mirrored yet — fetch it on demand
-    const bytes = await this.api.downloadBytes(projectId, partId, versionId)
-    await this.mirror.storeFile(projectId, rel, bytes, `Open ${fileName}`)
-    const index = await this.mirror.loadIndex(projectId)
-    index.files[rel] = { versionId, size: bytes.length }
-    await this.mirror.saveIndex(projectId, index)
-    return abs
+    return null
   }
 
   mirrorRootDisplay(): string {

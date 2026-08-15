@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidsync/shared'
-import { IconCheck, IconFile, IconExternal } from './icons'
+import { IconCheck, IconDownload, IconExternal, IconFile, IconFolderOpen, IconStop } from './icons'
 import { formatClock, formatSize } from '../lib/format'
 import { findPart } from '../lib/selectors'
+import { versionDownloadStatus } from '../lib/status'
+import { useClientState, useDownloads } from '../lib/store'
+import { DownloadBadge } from './badges'
+import { ProgressBar } from './ProgressBar'
 
 export default function PartDetail(props: {
   part: PartInfo | null
@@ -12,9 +16,14 @@ export default function PartDetail(props: {
   onSetParent: (partId: string, parentId: string | null) => void
   onSetName: (partId: string, name: string) => void
   onOpenVersion: (part: PartInfo, versionId: string) => void
+  onRevealVersion: (part: PartInfo, versionId: string) => void
+  onDownloadVersion: (part: PartInfo, versionId: string) => void
+  onCancelDownload: (versionId: string) => void
 }) {
   const [editingName, setEditingName] = useState(false)
   const { part } = props
+  const downloaded = useClientState().downloaded
+  const inFlight = useDownloads()
 
   if (!part) {
     return (
@@ -28,6 +37,10 @@ export default function PartDetail(props: {
 
   const parent = part.parentId ? findPart(props.org, part.parentId) : null
   const versions = [...part.versions].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
+  const headStatus = versionDownloadStatus(part.head, downloaded, inFlight)
+  const headProgress = part.head ? inFlight[part.head] : null
+
+  const disabledBtn = 'disabled:opacity-40 disabled:cursor-not-allowed'
 
   return (
     <aside className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-zinc-800 bg-zinc-950/60">
@@ -64,9 +77,42 @@ export default function PartDetail(props: {
             )}
           </div>
           <div className="flex gap-1">
+            {part.head &&
+              (headStatus === 'downloading' && headProgress ? (
+                <button
+                  className="rounded p-1.5 text-amber-400 hover:bg-zinc-800"
+                  title="Cancel download"
+                  onClick={() => props.onCancelDownload(part.head!)}
+                >
+                  <IconStop className="h-4 w-4" />
+                </button>
+              ) : headStatus === 'not-downloaded' ? (
+                <button
+                  className="rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  title="Download head version"
+                  onClick={() => props.onDownloadVersion(part, part.head!)}
+                >
+                  <IconDownload className="h-4 w-4" />
+                </button>
+              ) : null)}
             <button
-              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-              title="Open head version"
+              className={`rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 ${disabledBtn}`}
+              disabled={headStatus !== 'downloaded'}
+              title={
+                headStatus === 'downloaded'
+                  ? 'Show head version in file browser'
+                  : 'Download the head version first'
+              }
+              onClick={() => {
+                if (part.head) props.onRevealVersion(part, part.head)
+              }}
+            >
+              <IconFolderOpen className="h-4 w-4" />
+            </button>
+            <button
+              className={`rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 ${disabledBtn}`}
+              disabled={headStatus !== 'downloaded'}
+              title={headStatus === 'downloaded' ? 'Open head version' : 'Download the head version first'}
               onClick={() => {
                 if (part.head) props.onOpenVersion(part, part.head)
               }}
@@ -157,6 +203,8 @@ export default function PartDetail(props: {
         )}
         {versions.map((v) => {
           const isHead = v.id === part.head
+          const status = versionDownloadStatus(v.id, downloaded, inFlight)
+          const progress = inFlight[v.id]
           return (
             <div
               key={v.id}
@@ -180,20 +228,60 @@ export default function PartDetail(props: {
                 <span>by {v.submittedBy}</span>
                 <span>{formatSize(v.size)}</span>
               </div>
-              <div className="mt-1 flex gap-1">
-                <button
-                  className="rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800"
-                  onClick={() => props.onOpenVersion(part, v.id)}
-                >
-                  Open
-                </button>
-                {!isHead && (
-                  <button
-                    className="rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800"
-                    onClick={() => props.onSetHead(part.id, v.id)}
-                  >
-                    Make head
-                  </button>
+              <div className="mt-1 flex items-center gap-2">
+                <DownloadBadge status={status} />
+                {status === 'downloading' && progress && (
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <ProgressBar
+                        verb="Downloading"
+                        fileName={v.fileName}
+                        sent={progress.sent}
+                        total={progress.total}
+                      />
+                    </div>
+                    <button
+                      className="shrink-0 rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-amber-300 hover:bg-zinc-800"
+                      onClick={() => props.onCancelDownload(v.id)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                {status !== 'downloading' && (
+                  <div className="ml-auto flex gap-1">
+                    {status === 'not-downloaded' && (
+                      <button
+                        className="rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800"
+                        onClick={() => props.onDownloadVersion(part, v.id)}
+                      >
+                        Download
+                      </button>
+                    )}
+                    <button
+                      disabled={status !== 'downloaded'}
+                      className={`rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800 ${disabledBtn}`}
+                      onClick={() => props.onOpenVersion(part, v.id)}
+                    >
+                      Open
+                    </button>
+                    <button
+                      disabled={status !== 'downloaded'}
+                      className={`rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800 ${disabledBtn}`}
+                      title={status === 'downloaded' ? 'Show in file browser' : 'Download the file first'}
+                      onClick={() => props.onRevealVersion(part, v.id)}
+                    >
+                      Show in file browser
+                    </button>
+                    {!isHead && (
+                      <button
+                        className="rounded border border-zinc-700 px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800"
+                        onClick={() => props.onSetHead(part.id, v.id)}
+                      >
+                        Make head
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

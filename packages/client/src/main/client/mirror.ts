@@ -162,6 +162,16 @@ export class Mirror {
     }
   }
 
+  /** Every version id whose file exists on disk, across all local projects. */
+  async downloadedVersionIds(): Promise<string[]> {
+    const ids = new Set<string>()
+    for (const projectId of await this.listProjects()) {
+      const index = await this.loadIndex(projectId)
+      for (const f of Object.values(index.files)) ids.add(f.versionId)
+    }
+    return [...ids]
+  }
+
   async saveIndex(projectId: string, index: MirrorIndex): Promise<void> {
     await fsp.writeFile(this.indexPath(projectId), JSON.stringify(index, null, 2))
   }

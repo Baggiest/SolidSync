@@ -141,6 +141,31 @@ export default function App() {
                 })
               )
             }
+            onRevealVersion={(p, v) =>
+              void run(
+                window.solidsync.revealVersion({
+                  projectId: sel.project.id,
+                  sectionId: sel.section.id,
+                  partId: p.id,
+                  versionId: v,
+                  fileName: p.versions.find((x) => x.id === v)?.fileName ?? p.name
+                })
+              )
+            }
+            onDownloadVersion={(p, v) =>
+              void run(
+                window.solidsync.downloadVersion({
+                  projectId: sel.project.id,
+                  sectionId: sel.section.id,
+                  partId: p.id,
+                  versionId: v,
+                  fileName: p.versions.find((x) => x.id === v)?.fileName ?? p.name
+                })
+              )
+            }
+            onCancelDownload={(versionId) => {
+              void window.solidsync.cancelDownload(versionId)
+            }}
           />
         )}
       </div>

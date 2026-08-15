@@ -1,4 +1,4 @@
-import type { SyncState, WorkStatus } from '@solidsync/shared'
+import type { DownloadProgress, DownloadStatus, SyncState, WorkStatus } from '@solidsync/shared'
 
 export const WORK_META: Record<WorkStatus, { label: string; dot: string; ring: string; hint: string }> = {
   red: { label: 'Do not touch', dot: 'bg-red-500', ring: 'text-red-400', hint: 'Owner is mid-change — do not touch' },
@@ -11,4 +11,20 @@ export const SYNC_META: Record<SyncState, { label: string; pill: string }> = {
   syncing: { label: 'Syncing', pill: 'bg-sky-950 text-sky-300 border-sky-800 animate-pulse' },
   'out-of-sync': { label: 'Out of sync', pill: 'bg-amber-950 text-amber-400 border-amber-800' },
   offline: { label: 'Offline', pill: 'bg-zinc-800 text-zinc-500 border-zinc-700' }
+}
+
+/** Derive a version's download status from what's on drive + what's in flight. */
+export function versionDownloadStatus(
+  versionId: string | null,
+  downloaded: string[],
+  inFlight: Record<string, DownloadProgress>
+): DownloadStatus {
+  if (!versionId) return 'not-downloaded'
+  if (inFlight[versionId]) return 'downloading'
+  if (downloaded.includes(versionId)) return 'downloaded'
+  return 'not-downloaded'
+}
+
+export function downloadPercent(p: DownloadProgress): number {
+  return p.total > 0 ? Math.min(100, Math.round((p.sent / p.total) * 100)) : 0
 }
