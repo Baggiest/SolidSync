@@ -7,6 +7,7 @@ import SectionContent from './components/SectionContent'
 import PartDetail from './components/PartDetail'
 import { Modal } from './components/Modal'
 import { ServerSettingsModal } from './components/ServerSettingsModal'
+import { InfoModal } from './components/InfoModal'
 import { findPart, findSection } from './lib/selectors'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   const [newSectionOpen, setNewSectionOpen] = useState(false)
   const [serverOpen, setServerOpen] = useState(false)
   const [addServerOpen, setAddServerOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   useEffect(() => initStore(), [])
 
@@ -68,6 +70,7 @@ export default function App() {
       <TopBar
         onRefresh={() => void run(window.solidsync.refresh())}
         onOpenMirror={() => void window.solidsync.revealRoot()}
+        onOpenInfo={() => setInfoOpen(true)}
         onOpenServer={() => setServerOpen(true)}
         onSwitchHost={(id) => void run(window.solidsync.switchHost(id))}
         onAddServer={() => setAddServerOpen(true)}
@@ -236,6 +239,8 @@ export default function App() {
           }}
         />
       )}
+
+      {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
     </div>
   )
 }

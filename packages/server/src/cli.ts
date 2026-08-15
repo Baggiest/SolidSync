@@ -14,6 +14,7 @@ import { runBranch } from './commands/branch'
 import { runArchive, runUnarchive } from './commands/archive'
 import { runBackup } from './commands/backup'
 import { runVersion } from './commands/version'
+import { runStop, runRestart } from './commands/stop'
 
 export interface CommandOptions {
   dir: string
@@ -27,6 +28,9 @@ export interface CommandOptions {
   tls: boolean
   tlsPort: number
   ca: string
+  daemon: boolean
+  log: string
+  pidfile: string
   project?: string
   section?: string
   set?: string
@@ -67,6 +71,9 @@ function resolveOptions(raw: Record<string, string>): CommandOptions {
     tls,
     tlsPort,
     ca,
+    daemon: raw.daemon === 'true' || envOrDefault('SOLIDSYNC_DAEMON', 'false') === 'true',
+    log: raw.log ?? envOrDefault('SOLIDSYNC_LOG', ''),
+    pidfile: raw.pidfile ?? envOrDefault('SOLIDSYNC_PIDFILE', ''),
     project: raw.project,
     section: raw.section,
     set: raw.set
@@ -90,6 +97,8 @@ Commands:
   archive PROJECT Move a project out of the active list (server-side admin op).
   unarchive PROJECT  Bring an archived project back into the active list.
   backup          Snapshot the whole org (DB + repos) into one archive.
+  stop            Stop a background (--daemon) server using its pid file.
+  restart         Restart a background server using the recorded launch options.
   version         Print the server version.
 
 Common options:
@@ -103,6 +112,13 @@ Common options:
                   (default http://127.0.0.1:<port> from the settings above).
   --user NAME     Your name (default "you", or $SOLIDSYNC_USER).
   --json          Machine-readable output where supported.
+  --daemon        Detach and run in the background (serve). Logs go to
+                  --log (default <dir>/server.log); prints the URL + pid and
+                  exits once the server is up. Stop it with: kill <pid>, or
+                  solidsync-server stop / restart.
+  --log PATH      Log file for --daemon (default <dir>/server.log).
+  --pidfile PATH  Pid file written by a background server so stop/restart can
+                  find it (default <dir>/server.pid).
 TLS:
   --tls           Also serve HTTPS (on --tls-port). Generates a throwaway CA +
                   server cert into <dir>/tls on first run; clients pin the CA.
@@ -159,6 +175,8 @@ export async function main(argv: string[]): Promise<number> {
     case 'archive': return runArchive(o, positionals[1])
     case 'unarchive': return runUnarchive(o, positionals[1])
     case 'backup': return runBackup(o, positionals[1])
+    case 'stop': return runStop(o)
+    case 'restart': return runRestart(o)
     case 'version': return runVersion()
     default:
       console.error(`unknown command "${command}"`)

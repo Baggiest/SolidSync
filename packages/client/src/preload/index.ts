@@ -44,6 +44,9 @@ const api = {
   tlsClear: (): Promise<boolean> => ipcRenderer.invoke('tls:clear'),
   tlsStatus: (): Promise<{ trusted: boolean; fingerprint: string | null }> => ipcRenderer.invoke('tls:status'),
 
+  // misc
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke('app:openExternal', url),
+
   // actions
   createProject: (name: string): Promise<unknown> => ipcRenderer.invoke('action:createProject', name),
   createSection: (projectId: string, name: string): Promise<unknown> =>

@@ -14,6 +14,7 @@ declare global {
       tlsTrust: () => Promise<boolean>
       tlsClear: () => Promise<boolean>
       tlsStatus: () => Promise<{ trusted: boolean; fingerprint: string | null }>
+      openExternal: (url: string) => Promise<void>
       createProject: (name: string) => Promise<unknown>
       createSection: (projectId: string, name: string) => Promise<unknown>
       archiveProject: (projectId: string) => Promise<unknown>

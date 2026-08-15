@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { VERSION } from '@solidsync/shared'
 import { useClientState } from '../lib/store'
-import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconArchive, IconRestore } from './icons'
+import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconArchive, IconRestore, IconInfo } from './icons'
 
 export function TopBar(props: {
   onRefresh: () => void
   onOpenMirror: () => void
+  onOpenInfo: () => void
   onOpenServer: () => void
   onSwitchHost: (id: string) => void
   onAddServer: () => void
@@ -84,6 +85,13 @@ export function TopBar(props: {
       </div>
 
       <div className="ml-auto flex items-center gap-1">
+        <button
+          onClick={props.onOpenInfo}
+          className="inline-flex h-7 items-center gap-1.5 rounded border border-zinc-700 px-2 text-xs text-zinc-300 hover:bg-zinc-800"
+          title="About SolidSync"
+        >
+          <IconInfo className="h-4 w-4" />
+        </button>
         <button
           onClick={props.onOpenMirror}
           className="inline-flex h-7 items-center gap-1.5 rounded border border-zinc-700 px-2 text-xs text-zinc-300 hover:bg-zinc-800"

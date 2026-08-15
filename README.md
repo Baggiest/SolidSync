@@ -1,22 +1,59 @@
 # SolidSync
-Origin: Working as the captain of University of Tehran Nacional Formula Student team our mechanical engineers used to sort and manage their parts manually using FOLDERS and directories like "/GearboxV2-21AUG" and there was no shared space or over the network solution, everything was being done like the stone age using USB's sometimes, and my first thought was there has got to be a selfhost offline FOSS solution for mechanical engineering projects like we have git for software, and they said no, and shit they were right.
 
-<p align="center">
-  <img src="public/solidsync-logo.png" alt="SolidSync logo" width="300" />
-</p>
+<img src="public/solidsync-logo.png" alt="SolidSync logo" width="300" />
+
+## Quick start
+
+SolidSync is two pieces: one **server** on your shop network (it holds the org
+and the files), and the **desktop client** your teammates install to use it.
+No source code, no git, no account, no cloud.
+
+### Part 1 — Run the server
+
+One machine on your network runs the server. That machine needs **Node.js 20+**
+and **git** installed; nothing else.
+
+```bash
+npm install -g solidsync
+solidsync-server serve
+```
+
+That's it — the server prints the address your team should point at (e.g.
+`http://192.168.1.50:3020`) and stays running until you press Ctrl+C. Hand that
+address out to your team.
+
+### Part 2 — Install the client
+
+Everyone else just downloads the client for their machine from the
+[releases page](https://github.com/baggiest/solidsync/releases) — no install
+wizard, no account, no dependencies:
+
+- **Windows** — download `SolidSync-<version>-x64.exe` and double-click to
+  install, or grab the `-x64-portable.zip` and run it without installing.
+- **Linux** — download `SolidSync-<version>-amd64.deb` and run
+  `sudo apt install ./SolidSync-<version>-amd64.deb`.
+
+On first launch the client asks for your name and the server address from
+Part 1 (`http://<LAN-IP>:3020`), then you're in.
+
+### How did we get here
+
+ Working as the captain of University of Tehran Nacional Formula Student team our mechanical engineers used to sort and manage their parts manually using FOLDERS and directories like "/GearboxV2-21AUG" and there was no shared space or over the network solution, everything was being done like the stone age using USB's sometimes, and my first thought was there has got to be a selfhost offline FOSS solution for mechanical engineering projects like we have git for software, and they said no, and shit they were right.
+
+### Le Problems this project is trying to solve
+
+- Sanctions: Our team is in Iran and we are basically banned off every mainstream software solution. (I.E. Solidworks, Autodesk, etc.)
+- "WHERES THE HEAD": Days of work went on a part that wasnt the latest version of the hardware, And rebasing doesn't really exist in hardware like it does for software, SolidSync is set to address this problem at every level, parts have a version history and you always see the HEAD as the default
+- Part Status: some parts are incomplete and shouldn't be worked upon, you can upload your file and set a label to show the status of that part, wether it's ready, ask first or avoid
+- PDM/PLM is too expensive too complex
+- OnShape is cloud-based and vendor-locked goyware
+SolidSync is kinda worse at everything they do, but you own everything, and it just works and it's FREE
+
+### AI slop will take it from here
 
 SolidSync is a Local Shop-floor part sync tool that just works. you run it on a potato server you have lying around and it becomes a server, people on your team install the Client and. An advanced file explorer for mechanical engineers
 that replaces manually-dated shared folders with version history, a single
 source of truth for "which file is current," and basic collaboration signals.
-
-Problems:
-- Sanctions: Our team is in Iran and we are basically banned off every mainstream software solution. (I.E. Solidworks, Autodesk, etc.)
-- "WHERES THE HEAD": Days of work went on a part that wasnt the latest version of the hardware, And rebasing doesn't really exist in hardware like it does for software, SolidSync is set to address this problem at every level, parts have a version history and you always see the HEAD as the default
-- Part Status: some parts are incomplete and shouldn't be worked upon, you can upload your file and set a label to show the status of that part, wether it's ready, ask first or avoid
-- PDM/PLM is too expensive 
-- OnShape is cloud-based and vendor-locked goyware
-SolidSync is kinda worse at everything they do, but you own everything, and it just works and it's FREE
-
 
 No git required to use it. No login. No PDM seat.
 
@@ -108,6 +145,30 @@ placeholder — overwrite it before shipping.
 On first run, enter your name and type the address your admin printed when
 they started the server (`http://<LAN-IP>:3020`).
 
+### Things you can do in the client
+
+- **Browse the org** — projects in the sidebar, sections inside them, parts in
+  a table. Archived projects live under an "Archived" entry in the sidebar.
+- **Throw a file in** — drag a file onto a section (or use **Throw in**) to
+  create a new part with a 6-digit ID, a head version, and full history.
+  Dropping onto an existing part row saves a new version of that part instead.
+- **Save a new version** — drag a newer file onto a part's row. Every save is
+  a new entry, oldest to newest; repoint **Head** at any version.
+- **Download / open / reveal** — version files are pulled on demand with the
+  **Download** button (progress + cancel). Once downloaded: **Open** launches
+  the file, **Show in file browser** reveals it, both work offline.
+- **Work status** — flip a part between 🔴 Do not touch / 🟡 Ask first /
+  🟢 Clear. Independent of sync and download status.
+- **Parent/subpart** — mark a part as a subpart of another (or clear it) in
+  the part detail panel; editable later.
+- **Rename** — rename a part's display name without touching the file.
+- **Multi-server** — add and switch between saved servers from the top bar;
+  the server list persists across restarts.
+- **Sync control** — a manual **Sync** button forces a refresh, and the top
+  bar shows connection state (connected / connecting / disconnected).
+- **Archive / restore** — archive a finished project with one click (nothing
+  is deleted, files stay on drive), restore it from the sidebar.
+
 ## Host the server
 
 One machine on the shop network runs the headless server — the org lives there,
@@ -122,6 +183,30 @@ solidsync-server serve
 That's it. It binds `0.0.0.0:3020` by default, prints the URL to hand out
 (`http://<LAN-IP>:3020`), and stays in the foreground until Ctrl+C.
 
+Run it in the background with `--daemon` — the server detaches, logs to
+`<dir>/server.log` by default, and the command prints the pid + URL, then exits:
+
+```bash
+solidsync-server serve --daemon --name "Fab Shop"
+# SolidSync server running in the background
+#   pid      : 1234
+#   log      : ~/.solidsync/server.log
+#   tell everyone: http://192.168.1.50:3020
+#   stop it  : solidsync-server stop   (or kill 1234)
+```
+
+Stop or restart it by name — no need to remember the pid:
+
+```bash
+solidsync-server stop                 # graceful stop (SIGTERM, waits up to 15s)
+solidsync-server restart              # stop, then start again with the same options
+```
+
+`restart` replays the launch record the daemon wrote at startup, so it comes
+back with the same port, name, and TLS settings even after a reboot. Set
+`--log PATH` for a different log location, `--pidfile PATH` to move the pid
+file.
+
 Everything is optional; defaults work for most shops:
 
 | Option | Env var | Default | Meaning |
@@ -130,6 +215,9 @@ Everything is optional; defaults work for most shops:
 | `--port N` | `SOLIDSYNC_PORT` | `3020` | HTTP port |
 | `--host IP` | `SOLIDSYNC_HOST` | `0.0.0.0` | bind address |
 | `--name NAME` | `SOLIDSYNC_NAME` | `Shop` | org name shown in the UI |
+| `--daemon` | `SOLIDSYNC_DAEMON` | off | run `serve` in the background |
+| `--log PATH` | `SOLIDSYNC_LOG` | `<dir>/server.log` | log file for `--daemon` |
+| `--pidfile PATH` | `SOLIDSYNC_PIDFILE` | `<dir>/server.pid` | pid file for `--daemon` (read by `stop`/`restart`) |
 
 ```bash
 solidsync-server serve --port 3020 --name "Fab Shop"
@@ -141,10 +229,37 @@ solidsync-server serve --port 3020 --name "Fab Shop"
   below.
 - **Backups:** `solidsync-server backup` snapshots the whole org into one
   archive, or just copy the `--dir` folder.
-- **More commands:** `init`, `health`, `list`, `import FILE`, `status PARTID`,
-  `branch PROJECT` (server-side project copy — admin only, not exposed in the
-  GUI), `archive PROJECT` / `unarchive PROJECT`, `version` — see
-  `solidsync-server --help`.
+
+### Server CLI command reference
+
+Everything the GUI can do over HTTP, the CLI can do from a terminal — run
+against a *running* server unless noted.
+
+```bash
+solidsync-server serve                     # run the server in the foreground
+solidsync-server serve --daemon            # run it in the background (logs to <dir>/server.log)
+solidsync-server stop                      # stop the background server
+solidsync-server restart                   # stop, then start again with the same options
+solidsync-server init                      # create/repair the org data folder
+solidsync-server health                    # is the server up? prints JSON
+solidsync-server list                      # print the whole org tree
+solidsync-server list --json               # raw org snapshot, machine-readable
+solidsync-server import step.step          # throw a file in (first project/section)
+solidsync-server import step.step --project "Gearbox V2" --section Drivetrain
+solidsync-server status 482913             # show a part's state (prefix ok)
+solidsync-server status 482913 --set red   # stamp work status: red|yellow|green
+solidsync-server branch "Gearbox V2" "Gearbox V2 Copy"   # admin-only project copy
+solidsync-server archive "Gearbox V2"      # move out of the active list
+solidsync-server unarchive "Gearbox V2"    # bring it back
+solidsync-server backup                    # snapshot whole org to tar.gz
+solidsync-server backup /srv/solidsync-backups/org-$(date +%F).tar.gz
+solidsync-server version                   # print the server version
+```
+
+Point any command at a remote server with `--url http://<LAN-IP>:3020` (and
+`--ca PATH` for HTTPS). The full reference lives in
+[`packages/server/README.md`](packages/server/README.md); `solidsync-server
+--help` prints the usage inline.
 
 ## Running it
 
@@ -213,6 +328,8 @@ Client machine — user-data folder (e.g. %APPDATA%/SolidSync on Windows):
 Server machine — SOLIDSYNC_DIR (default ~/.solidsync):
 ├── solidsync.db          # metadata: projects, sections, parts, versions, statuses
 ├── tls/                  # generated CA + server cert (when serving with --tls)
+├── server.pid            # pid of the background server (when running with --daemon)
+├── server.launch.json    # launch record used by `restart`
 └── repos/<projectId>/    # one git repo per project holding the file bytes
 ```
 

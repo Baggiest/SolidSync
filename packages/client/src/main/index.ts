@@ -164,6 +164,12 @@ async function requireOnline(): Promise<Session> {
 
 ipcMain.handle('app:getState', () => buildState())
 
+ipcMain.handle('app:openExternal', async (_e, url: string) => {
+  const target = String(url ?? '')
+  if (!/^https?:\/\//.test(target)) throw new Error('only http(s) links can be opened')
+  await shell.openExternal(target)
+})
+
 ipcMain.handle('onboarding:save', async (_e, cfg: AppConfig) => {
   const clean: AppConfig = {
     configured: true,
