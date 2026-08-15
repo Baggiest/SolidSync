@@ -7,7 +7,7 @@ import type { CommandOptions } from '../cli'
 
 export async function runServe(o: CommandOptions): Promise<number> {
   await mkdir(o.dir, { recursive: true })
-  const store = await OrgStore.open(o.dir, o.name)
+  const store = await OrgStore.open(o.dir, o.name, o.hostname)
 
   const hosts = tlsHosts(o.host)
   const tls: TlsMaterial | null = o.tls ? await ensureTls(o.dir, hosts) : null
@@ -23,7 +23,7 @@ export async function runServe(o: CommandOptions): Promise<number> {
   }
 
   const ips = lanIPs()
-  console.log(`SolidSync server "${store.getOrgName()}" (rev ${store.getRev()})`)
+  console.log(`SolidSync server "${store.getHostName()}" (org "${store.getOrgName()}", rev ${store.getRev()})`)
   console.log(`  org data : ${o.dir}`)
   console.log(`  listening: http://${httpHandle.host}:${httpHandle.port}`)
   if (tlsHandle) console.log(`             https://${tlsHandle.host}:${tlsHandle.port}`)

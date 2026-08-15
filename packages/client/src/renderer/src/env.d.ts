@@ -8,6 +8,8 @@ declare global {
       onUploadProgress: (cb: (p: UploadProgress) => void) => () => void
       onDownloadProgress: (cb: (p: DownloadProgress) => void) => () => void
       saveOnboarding: (cfg: AppConfig) => Promise<unknown>
+      switchHost: (id: string) => Promise<unknown>
+      removeHost: (id: string) => Promise<unknown>
       tlsProbe: (o: { serverIp: string; port: number }) => Promise<{ ok: boolean; fingerprint?: string; error?: string }>
       tlsTrust: () => Promise<boolean>
       tlsClear: () => Promise<boolean>

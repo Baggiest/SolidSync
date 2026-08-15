@@ -30,6 +30,8 @@ describe('REST API', () => {
     const h = await api.health()
     expect(h.orgName).toBe('API Shop')
     expect(typeof h.rev).toBe('number')
+    expect(typeof h.hostName).toBe('string')
+    expect(h.hostName).toBeTruthy()
   })
 
   it('creates a project and section over HTTP', async () => {

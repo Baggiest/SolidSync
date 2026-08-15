@@ -10,7 +10,8 @@ export const EMPTY_STATE: ClientState = {
   error: null,
   health: null,
   mirrorRoot: null,
-  downloaded: []
+  downloaded: [],
+  hosts: []
 }
 
 let state: ClientState = EMPTY_STATE

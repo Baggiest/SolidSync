@@ -57,7 +57,7 @@ export class ServerClient {
     return { 'Content-Type': 'application/json', 'X-User': this.user }
   }
 
-  async health(): Promise<{ ok: boolean; orgName: string; rev: number; serverTime: string; version: string }> {
+  async health(): Promise<{ ok: boolean; orgName: string; hostName?: string; rev: number; serverTime: string; version: string }> {
     const res = await this.req('/api/health', { signal: AbortSignal.timeout(8000) })
     return parse(res)
   }

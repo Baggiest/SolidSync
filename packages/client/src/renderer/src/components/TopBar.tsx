@@ -1,12 +1,20 @@
 import { useState } from 'react'
+import { VERSION } from '@solidsync/shared'
 import { useClientState } from '../lib/store'
 import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconArchive, IconRestore } from './icons'
 
-export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void; onOpenServer: () => void }) {
+export function TopBar(props: {
+  onRefresh: () => void
+  onOpenMirror: () => void
+  onOpenServer: () => void
+  onSwitchHost: (id: string) => void
+  onAddServer: () => void
+}) {
   const state = useClientState()
   const { appConfig: cfg, connection, org } = state
 
   const addr = cfg.serverIp ? `${cfg.useTls ? 'https' : 'http'}://${cfg.serverIp}:${cfg.port}` : '—'
+  const activeHostId = cfg.serverIp ? `${cfg.useTls ? 'https' : 'http'}://${cfg.serverIp}:${cfg.port}` : ''
 
   const connText =
     connection === 'online' ? 'Connected' : connection === 'connecting' ? 'Connecting…' : 'Disconnected'
@@ -22,6 +30,9 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
       <div className="flex items-center gap-2">
         <img src="./superevil-globe.png" alt="SolidSync globe" className="h-12 w-6 object-contain" />
         <span className="text-sm font-semibold tracking-tight text-zinc-100">SolidSync</span>
+        <span className="text-[10px] text-zinc-600" title="Client version">
+          v{VERSION}
+        </span>
         {org && (
           <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[11px] font-medium text-zinc-400">
             {org.orgName}
@@ -33,6 +44,27 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
 
       <div className="flex items-center gap-1.5 text-xs text-zinc-400">
         <span className="font-medium uppercase tracking-wide text-zinc-500">Server</span>
+        {state.hosts.length > 0 && (
+          <select
+            value={activeHostId}
+            onChange={(e) => props.onSwitchHost(e.target.value)}
+            className="max-w-[200px] rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 font-mono text-[12px] text-zinc-300 outline-none hover:border-zinc-600"
+            title="Switch server"
+          >
+            {state.hosts.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name || h.serverIp}
+              </option>
+            ))}
+          </select>
+        )}
+        <button
+          onClick={props.onAddServer}
+          className="rounded p-0.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+          title="Add a server"
+        >
+          <IconPlus className="h-3.5 w-3.5" />
+        </button>
         <button
           onClick={props.onOpenServer}
           className="rounded px-1.5 py-0.5 font-mono text-[12px] text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
@@ -44,6 +76,11 @@ export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void;
         <span className={connection === 'online' ? 'text-emerald-400' : 'text-zinc-400'}>
           {connText}
         </span>
+        {state.health?.version && (
+          <span className="ml-1.5 text-[10px] text-zinc-600" title="Server version">
+            Server v{state.health.version}
+          </span>
+        )}
       </div>
 
       <div className="ml-auto flex items-center gap-1">
@@ -83,7 +120,7 @@ export function SideNav(props: {
   const archived = (org?.projects ?? []).filter((p) => p.archived)
 
   const renderProject = (project: ProjectRow, archivedRow: boolean) => {
-    const open = collapsed[project.id] !== true
+    const open = collapsed[project.id] === true
     const activeProject = props.selectedProjectId === project.id
     return (
       <div key={project.id}>
@@ -92,7 +129,7 @@ export function SideNav(props: {
             activeProject ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-800/60'
           }`}
           onClick={() => {
-            setCollapsed((c) => ({ ...c, [project.id]: open }))
+            setCollapsed((c) => ({ ...c, [project.id]: !open }))
             const firstSection = project.sections[0]
             if (firstSection) props.onSelectSection(project.id, firstSection.id)
           }}

@@ -56,6 +56,7 @@ export function createApp(store: OrgStore, opts: { caPem?: string } = {}): expre
     res.json({
       ok: true,
       orgName: store.getOrgName(),
+      hostName: store.getHostName(),
       rev: store.getRev(),
       serverTime: new Date().toISOString(),
       version: VERSION

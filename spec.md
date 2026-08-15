@@ -17,7 +17,7 @@ ORG → PROJECTS → SECTIONS → PARTS
 - **Org** — one server, one hosted endpoint. An org is a single install.
 - **Project** — a folder-equivalent. Maps to one thing being built. Can be archived (see Section 7).
 - **Section** — a grouping inside a project (e.g. a subsystem area). Parts live here.
-- **Part** — a single file with a 6-digit ID, two independent statuses, a head version, and full history.
+- **Part** — a single file with a 6-digit ID, three independent statuses, a head version, and full history.
 
 ---
 
@@ -153,9 +153,12 @@ Persistent, always visible, not buried in settings:
 
 | Element | Behavior |
 |---|---|
+| Client version | Shown next to the app title (e.g. "v0.4.3") |
 | Server IP | Displayed plainly at all times |
 | Port | Displayed plainly at all times |
+| Server version | Shown right of the connection status (e.g. "Server v0.4.3") |
 | Connection status | Live indicator — connected / disconnected |
+| Host switcher | When more than one server has been added, a dropdown of saved servers — switch with one click. A "+" button beside it opens a fresh, empty "Add server" form (host registry is saved on this machine, keyed by `scheme://ip:port`). Each server's display name is the host name the server reports on `/api/health` (set when it starts with `--hostname`, or a random fallback) — people don't type one into the GUI. |
 | Disconnected state | A large, unmissable exclamation mark. Not a small icon or a subtle color shift — this needs to be the kind of thing someone notices from across the room, since the team's core pain is desyncs going unnoticed. |
 
 ---

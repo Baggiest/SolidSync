@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { Modal } from './Modal'
 import { useClientState, doAction } from '../lib/store'
+import { parseServerInput } from '../lib/format'
 
-export function ServerSettingsModal(props: { onClose: () => void; onSaved: () => void }) {
+export function ServerSettingsModal(props: { onClose: () => void; onSaved: () => void; empty?: boolean }) {
   const { appConfig } = useClientState()
+  const empty = props.empty === true
+  const activeHostId = appConfig.serverIp
+    ? `${appConfig.useTls ? 'https' : 'http'}://${appConfig.serverIp}:${appConfig.port}`
+    : ''
+  // The person's name is a global default learned at onboarding; pre-fill it
+  // even when adding a fresh server ("+"), so they don't retype it.
   const [name, setName] = useState(appConfig.name)
-  const [serverIp, setServerIp] = useState(appConfig.serverIp)
-  const [port, setPort] = useState(String(appConfig.port || 3020))
-  const [useTls, setUseTls] = useState(appConfig.useTls === true)
+  const [serverIp, setServerIp] = useState(empty ? '' : appConfig.serverIp)
+  const [port, setPort] = useState(empty ? '' : String(appConfig.port || 3020))
+  const [useTls, setUseTls] = useState(empty ? false : appConfig.useTls === true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [trust, setTrust] = useState<string | null>(null)
@@ -15,11 +22,17 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
   const save = async (): Promise<void> => {
     setBusy(true)
     setError(null)
+    const ip = serverIp.trim()
+    if (!ip) {
+      setError('Enter a server IP.')
+      setBusy(false)
+      return
+    }
     const cfg = {
       configured: true,
       name: name.trim() || (appConfig.name || 'Mechanic'),
-      serverIp: serverIp.trim() || appConfig.serverIp,
-      port: Number(port) || appConfig.port || 3020,
+      serverIp: ip,
+      port: Number(port) || (useTls ? 3443 : 3020),
       useTls
     }
     const err = await doAction(window.solidsync.saveOnboarding(cfg))
@@ -34,11 +47,16 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
   const submit = async (): Promise<void> => {
     setError(null)
     setTrust(null)
+    const ip = serverIp.trim()
+    if (!ip) {
+      setError('Enter a server IP.')
+      return
+    }
     if (useTls) {
       setBusy(true)
       const probe = await window.solidsync.tlsProbe({
-        serverIp: serverIp.trim() || appConfig.serverIp,
-        port: Number(port) || appConfig.port || 3020
+        serverIp: ip,
+        port: Number(port) || (useTls ? 3443 : 3020)
       })
       setBusy(false)
       if (!probe.ok) {
@@ -62,7 +80,7 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
   }
 
   return (
-    <Modal title="Server settings" onClose={props.onClose}>
+    <Modal title={empty ? 'Add server' : 'Server settings'} onClose={props.onClose}>
       <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500">
         Your name
       </label>
@@ -78,7 +96,16 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
       <input
         className="mt-1.5 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-sky-600"
         value={serverIp}
-        onChange={(e) => setServerIp(e.target.value)}
+        onChange={(e) => {
+          const parsed = parseServerInput(e.target.value)
+          if (parsed) {
+            setServerIp(parsed.host)
+            if (parsed.port != null) setPort(String(parsed.port))
+            if (parsed.tls != null) setUseTls(parsed.tls)
+          } else {
+            setServerIp(e.target.value)
+          }
+        }}
         placeholder="e.g. 192.168.1.50"
       />
 
@@ -135,13 +162,28 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
       )}
 
       <div className="mt-5 flex items-center justify-between gap-2">
-        <button
-          onClick={() => void forgetIdentity()}
-          className="rounded-md border border-zinc-800 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-          title="Delete this machine's pinned server certificate (re-prompts next time)"
-        >
-          Forget server identity
-        </button>
+        <div className="flex items-center gap-2">
+          {!empty && (
+            <button
+              onClick={() => void forgetIdentity()}
+              className="rounded-md border border-zinc-800 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+              title="Delete this machine's pinned server certificate (re-prompts next time)"
+            >
+              Forget server identity
+            </button>
+          )}
+          {!empty && activeHostId && (
+            <button
+              onClick={() => void (async () => {
+                await doAction(window.solidsync.removeHost(activeHostId))
+              })()}
+              className="rounded-md border border-zinc-800 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+              title="Remove this server from the switch list (you stay connected)"
+            >
+              Remove from list
+            </button>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={props.onClose}
@@ -154,7 +196,7 @@ export function ServerSettingsModal(props: { onClose: () => void; onSaved: () =>
             disabled={busy}
             className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
           >
-            {busy ? 'Saving…' : 'Save & reconnect'}
+            {busy ? 'Saving…' : empty ? 'Add & connect' : 'Save & reconnect'}
           </button>
         </div>
       </div>

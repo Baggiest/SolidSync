@@ -66,6 +66,36 @@ function shortId(prefix = ''): string {
   return prefix + randomBytes(3).toString('hex')
 }
 
+// Friendly fallback names when `serve --hostname` isn't given. A small,
+// fixed list of fruits and animals, picked at random and persisted so the
+// name stays stable across restarts.
+const FALLBACK_HOST_NAMES = [
+  'Banana', 'Papaya', 'Peach', 'Persimmon', 'Plantain',
+  'Badger', 'Coyote', 'Marmot', 'Otter', 'Pika'
+]
+
+function randomHostName(): string {
+  return FALLBACK_HOST_NAMES[Math.floor(Math.random() * FALLBACK_HOST_NAMES.length)]!
+}
+
+/** Read a meta row straight off a db handle (used before the store exists). */
+function metaValue(db: Database, key: string): string | null {
+  const res = db.exec('SELECT value FROM meta WHERE key=?', [key])
+  if (res.length === 0 || res[0].values.length === 0) return null
+  return String(res[0].values[0][0])
+}
+
+/**
+ * A given flag wins, then whatever was persisted before, then a random name.
+ * The host name is quality-of-life identity — never authoritative data.
+ */
+function resolveHostName(stored: string | null, requested?: string): string {
+  const given = requested?.trim()
+  if (given) return given
+  if (stored) return stored
+  return randomHostName()
+}
+
 function mapVersion(r: Record<string, unknown>): VersionInfo {
   return {
     id: String(r.id),
@@ -112,14 +142,16 @@ export class OrgStore {
   private queue = new SerialQueue()
   readonly rootDir: string
   readonly orgName: string
+  readonly hostName: string
 
-  private constructor(db: Database, orgName: string, rootDir: string) {
+  private constructor(db: Database, orgName: string, rootDir: string, hostName: string) {
     this.db = db
     this.orgName = orgName
     this.rootDir = rootDir
+    this.hostName = hostName
   }
 
-  static async open(rootDir: string, orgName = 'Shop'): Promise<OrgStore> {
+  static async open(rootDir: string, orgName = 'Shop', hostName?: string): Promise<OrgStore> {
     const sql = await loadSqlJs()
     await mkdir(rootDir, { recursive: true })
     const dbPath = path.join(rootDir, 'solidsync.db')
@@ -132,8 +164,10 @@ export class OrgStore {
     }
     db.run(SCHEMA)
     migrate(db)
-    const store = new OrgStore(db, orgName, rootDir)
+    const resolved = resolveHostName(metaValue(db, 'host_name'), hostName)
+    const store = new OrgStore(db, orgName, rootDir, resolved)
     store.setMeta('org_name', orgName)
+    store.setMeta('host_name', resolved)
     await store.save()
     return store
   }
@@ -213,6 +247,11 @@ export class OrgStore {
 
   getOrgName(): string {
     return this.orgName
+  }
+
+  /** The server's display host name (set or random); stable across restarts. */
+  getHostName(): string {
+    return this.hostName
   }
 
   getPart(partId: string): PartInfo | null {

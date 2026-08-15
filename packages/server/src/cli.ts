@@ -20,6 +20,7 @@ export interface CommandOptions {
   port: number
   host: string
   name: string
+  hostname: string
   url: string
   user: string
   json: boolean
@@ -48,6 +49,7 @@ function resolveOptions(raw: Record<string, string>): CommandOptions {
   const port = Number(raw.port ?? envOrDefault('SOLIDSYNC_PORT', '3020'))
   const host = raw.host ?? envOrDefault('SOLIDSYNC_HOST', '0.0.0.0')
   const name = raw.name ?? envOrDefault('SOLIDSYNC_NAME', 'Shop')
+  const hostname = raw.hostname ?? envOrDefault('SOLIDSYNC_HOSTNAME', '')
   const user = raw.user ?? envOrDefault('SOLIDSYNC_USER', 'you')
   const tls = raw.tls === 'true' || envOrDefault('SOLIDSYNC_TLS', 'false') === 'true'
   const tlsPort = Number(raw['tls-port'] ?? envOrDefault('SOLIDSYNC_TLS_PORT', '3443'))
@@ -58,6 +60,7 @@ function resolveOptions(raw: Record<string, string>): CommandOptions {
     port,
     host,
     name,
+    hostname,
     url,
     user,
     json: raw.json === 'true',
@@ -94,6 +97,8 @@ Common options:
   --port N        Port for serve (default 3020, or $SOLIDSYNC_PORT).
   --host IP       Bind address for serve (default 0.0.0.0, or $SOLIDSYNC_HOST).
   --name NAME     Org name shown in the UI (default "Shop", or $SOLIDSYNC_NAME).
+  --hostname NAME Friendly host name for this server, shown in clients
+                  (default a random name, or $SOLIDSYNC_HOSTNAME).
   --url URL       Server base URL for client-ish commands
                   (default http://127.0.0.1:<port> from the settings above).
   --user NAME     Your name (default "you", or $SOLIDSYNC_USER).

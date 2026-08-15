@@ -37,7 +37,7 @@ reach it by `IP:port`, identity comes from the `X-User` header.
 
 ```
 solidsync0/
-├── spec.md                 (original product spec — unchanged)
+├── spec.md                 (product spec — updated as features land)
 ├── spec2.md                (this plan)
 ├── package.json            (workspaces: packages/*, root scripts)
 ├── vitest.config.ts        (root test runner)
@@ -79,6 +79,8 @@ solidsync-server <command> [options]
              --port <n>     listen port         (default 3020)
              --host <ip>    bind address        (default 0.0.0.0)
              --name <org>   org name            (default "Shop")
+             --hostname <name>  friendly server name shown in clients
+                                (default a random fruit/animal name)
              --verbose      log each request
   init     Create/verify the org data dir + DB  (--dir, --name)
   health   --url http://ip:port   print health JSON
@@ -99,6 +101,10 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
 - Opens the org (`OrgStore.open`), starts the Express app on `host:port`.
 - Prints the reachable address(es) for the team: `0.0.0.0:3020` plus the first
   LAN IP (e.g. `192.168.1.50:3020`).
+- Host name (`--hostname` / `SOLIDSYNC_HOSTNAME`) is persisted in the org DB and
+  reported on `/api/health` so clients label the server with it. Without a flag
+  the server picks a stable random name from a small fruit/animal list. This is
+  cosmetic identity only — never authoritative org data.
 - Graceful shutdown on SIGINT/SIGTERM: close HTTP server, persist + close DB.
 - No login, no auth — LAN trust model, unchanged from spec.
 
@@ -130,7 +136,11 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
 - `AppConfig` drops `mode`; `ClientState` drops `hostAddress`.
 - Onboarding: name + server IP + port only. Default `127.0.0.1:3020`.
 - Top bar: always shows `${serverIp}:${port}` and connection state; the
-  "Hosting" badge and host-address logic are removed.
+  "Hosting" badge and host-address logic are removed. When multiple servers
+  have been saved, the top bar shows a dropdown to switch between them
+  (hosts registry persisted in the client's `config.json`; each host can carry
+  a friendly name). Saving server settings upserts the connection into that
+  registry automatically; onboarding itself stays one-screen.
 - `Session` becomes: `SyncService(config.name, mirrorRoot)` pointed at the
   server. `config.ts`, `index.ts`, `session.ts` simplified.
 - The **"start my own copy" (duplicate) action is removed from the client** —

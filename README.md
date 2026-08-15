@@ -27,7 +27,7 @@ ORG  →  PROJECTS  →  SECTIONS  →  PARTS
 - **Org** — one server, one hosted endpoint. A single install.
 - **Project** — a folder-equivalent, maps to one thing being built.
 - **Section** — a grouping inside a project (a subsystem area). Parts live here.
-- **Part** — a single file with a 6-digit ID, two independent statuses, a head
+- **Part** — a single file with a 6-digit ID, three independent statuses, a head
   version, and full history.
 
 ## What it does
@@ -37,19 +37,33 @@ ORG  →  PROJECTS  →  SECTIONS  →  PARTS
   history. Optionally mark it as a subpart of another part; skip with one click.
 - **Version history** — every submission is a new entry, oldest to newest.
   Repoint **Head** ("current version") at any point with a single click.
-- **Two statuses, kept separate** — a machine-level **sync status** (Current /
-  Syncing / Out of sync / Offline, set by the program) and a people-level
-  **work status** (Red = don't touch, Yellow = ask first, Green = ready).
-  Both show directly in the section listing. A part can be perfectly synced but
-  flagged red (owner mid-change), or out of sync but green (network hiccup).
+- **Three statuses, kept separate** — a machine-level **sync status** (Current /
+  Syncing / Out of sync / Offline, set by the program), a per-version
+  **download status** (On drive / Downloading / Not on drive — whether this
+  version's file is actually on this machine), and a people-level **work
+  status** (Red = don't touch, Yellow = ask first, Green = ready). All three
+  show directly in the section listing and are always visible at once: a part
+  can be perfectly synced but flagged red (owner mid-change), out of sync but
+  green (network hiccup), or fully synced but not on this drive yet.
+- **Files pulled on demand, not mirrored eagerly** — the app-level sync only
+  fetches the org *structure* (projects, sections, parts, versions). Each
+  version's file is downloaded individually with a **Download** button that
+  shows progress and a Cancel, and the download status is tracked per version.
+  Once a file is on drive it opens / "shows in file browser" even while
+  offline; a submitted version is immutable, so downloaded files never re-sync.
 - **Strict mirror, no local authority** — the GUI shows exactly what's on the
   server and nothing else. Delete a project on the server and it disappears
   from every client's GUI and local mirror after the next sync. There is no
   duplicate / "start my own copy" action anywhere in the client.
+- **Saved servers, one-click switching** — every server you connect to is
+  remembered (with an optional friendly name). When more than one is saved, a
+  dropdown in the top bar switches between them; a "+" button beside it opens
+  a fresh "Add server" form to connect to another one.
 - **Archive / restore projects** — move a finished project out of the active
   list into an **Archived** section in the sidebar with one click. Nothing is
-  deleted: the project stays on the server, fully browsable and still mirrored
-  by every client, and restores with a single click.
+  deleted: the project stays on the server, fully browsable and still present in
+  every client's listing — any files already on a machine's drive stay there — and
+  restores with a single click.
 - **Always-visible connection bar** — server IP, port, and a giant red
   disconnected banner, so a dropped connection is noticed from across the room.
 
@@ -136,7 +150,9 @@ solidsync-server serve --port 3020 --name "Fab Shop"
 
 First run shows a one-time setup: enter your name and point at the shop server
 (IP and port). No account, no password. The client never hosts the org — it is
-a mirror of whatever the server has.
+a mirror of whatever the server has (structure synced automatically, version
+files pulled on demand). Every server you connect to is remembered for
+one-click switching in the top bar.
 
 Requires:
 
@@ -190,7 +206,7 @@ itself lives on the server machine.
 
 ```
 Client machine — user-data folder (e.g. %APPDATA%/SolidSync on Windows):
-├── config.json          # this machine's setup (name, server IP, port)
+├── config.json          # this machine's setup (name, active server, saved servers)
 ├── server-ca.pem        # pinned server CA (HTTPS trust)
 └── mirror/<projectId>/  # local mirror of the server's projects, one git repo each
 
@@ -204,10 +220,13 @@ Server machine — SOLIDSYNC_DIR (default ~/.solidsync):
   up by copying it; the org is the whole server data folder.
 - File bytes are committed into per-project git repos, so every version is
   recoverable from history.
-- Each client keeps a local mirror (backed by `isomorphic-git`) so browsing
-  works offline. The mirror only ever reflects the server: anything that
-  disappears from the server is pruned from the mirror and vanishes from the
-  GUI on the next sync.
+- Each client keeps a local mirror (backed by `isomorphic-git`) of the org
+  *structure* only — the sync layer fetches projects/sections/parts/versions
+  and prunes anything that vanished from the server, so browsing stays current
+  and deleted content disappears from the GUI on the next sync. Version *files*
+  are pulled on demand via Download (progress + cancel) and tracked per version,
+  so you only download what you actually open. Anything already on the drive
+  opens and browses offline.
 
 ## Architecture
 

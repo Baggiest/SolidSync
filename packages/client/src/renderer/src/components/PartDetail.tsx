@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { OrgSnapshot, PartInfo, WorkStatus } from '@solidsync/shared'
-import { IconCheck, IconDownload, IconExternal, IconFile, IconFolderOpen, IconStop } from './icons'
+import { IconCheck, IconDownload, IconExternal, IconFile, IconFolderOpen, IconStop, IconX } from './icons'
 import { formatClock, formatSize } from '../lib/format'
 import { findPart } from '../lib/selectors'
 import { versionDownloadStatus } from '../lib/status'
@@ -19,6 +19,7 @@ export default function PartDetail(props: {
   onRevealVersion: (part: PartInfo, versionId: string) => void
   onDownloadVersion: (part: PartInfo, versionId: string) => void
   onCancelDownload: (versionId: string) => void
+  onClose: () => void
 }) {
   const [editingName, setEditingName] = useState(false)
   const { part } = props
@@ -118,6 +119,14 @@ export default function PartDetail(props: {
               }}
             >
               <IconExternal className="h-4 w-4" />
+            </button>
+            <span className="mx-0.5 h-4 w-px bg-zinc-800" />
+            <button
+              className="rounded p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+              title="Close panel"
+              onClick={props.onClose}
+            >
+              <IconX className="h-4 w-4" />
             </button>
           </div>
         </div>

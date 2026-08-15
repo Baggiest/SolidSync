@@ -33,6 +33,10 @@ const api = {
   // onboarding
   saveOnboarding: (cfg: AppConfig): Promise<void> => ipcRenderer.invoke('onboarding:save', cfg),
 
+  // saved hosts (quick server switching)
+  switchHost: (id: string): Promise<unknown> => ipcRenderer.invoke('hosts:switch', id),
+  removeHost: (id: string): Promise<unknown> => ipcRenderer.invoke('hosts:remove', id),
+
   // TLS trust (TOFU)
   tlsProbe: (o: { serverIp: string; port: number }): Promise<{ ok: boolean; fingerprint?: string; error?: string }> =>
     ipcRenderer.invoke('tls:probe', o),

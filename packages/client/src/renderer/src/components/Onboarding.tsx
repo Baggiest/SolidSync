@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { doAction } from '../lib/store'
+import { parseServerInput } from '../lib/format'
 
 export default function Onboarding() {
   const [name, setName] = useState('')
@@ -81,7 +82,16 @@ export default function Onboarding() {
             className="mt-1.5 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-sky-600"
             placeholder="Host IP, e.g. 192.168.1.50"
             value={serverIp}
-            onChange={(e) => setServerIp(e.target.value)}
+            onChange={(e) => {
+              const parsed = parseServerInput(e.target.value)
+              if (parsed) {
+                setServerIp(parsed.host)
+                if (parsed.port != null) setPort(String(parsed.port))
+                if (parsed.tls != null) setUseTls(parsed.tls)
+              } else {
+                setServerIp(e.target.value)
+              }
+            }}
           />
           <input
             className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-sky-600"

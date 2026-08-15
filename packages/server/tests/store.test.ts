@@ -206,6 +206,38 @@ describe('OrgStore', () => {
     const rel = store.versionRelPath(copy.sections[0]!.id, copyA.id, copyA.versions[1]!.id, copyA.ext)
     await expect(access(path.join(store.projectRepoDir(branch.projectId), rel))).resolves.toBeUndefined()
   })
+
+  it('keeps the host name stable across restarts', async () => {
+    const dir = path.join(tmp, 'hostname')
+    await mkdir(dir, { recursive: true })
+    const first = await OrgStore.open(dir, 'Host Shop', 'Princeton-library')
+    expect(first.getHostName()).toBe('Princeton-library')
+    await first.close()
+
+    const reopened = await OrgStore.open(dir, 'Host Shop')
+    expect(reopened.getHostName()).toBe('Princeton-library')
+    await reopened.close()
+  })
+
+  it('lets a given host name override the stored one', async () => {
+    const dir = path.join(tmp, 'hostname-override')
+    await mkdir(dir, { recursive: true })
+    const first = await OrgStore.open(dir, 'Host Shop', 'Old-name')
+    await first.close()
+
+    const renamed = await OrgStore.open(dir, 'Host Shop', 'New-name')
+    expect(renamed.getHostName()).toBe('New-name')
+    await renamed.close()
+  })
+
+  it('falls back to a random fruit/animal host name when none is given', async () => {
+    const dir = path.join(tmp, 'hostname-random')
+    await mkdir(dir, { recursive: true })
+    const fresh = await OrgStore.open(dir, 'Host Shop')
+    expect(fresh.getHostName()).toBeTruthy()
+    expect(typeof fresh.getHostName()).toBe('string')
+    await fresh.close()
+  })
 })
 
 describe('Repo (git engine)', () => {

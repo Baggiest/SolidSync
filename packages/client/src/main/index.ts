@@ -4,7 +4,7 @@ import iconPath from '../../build/icon.png?asset'
 import { ConfigStore } from './config'
 import { Session } from './session'
 import { TlsTrust, fetchServerCa } from './tls'
-import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, HostPreset, UploadProgress, WorkStatus } from '@solidsync/shared'
 import { DEFAULT_PORT } from '@solidsync/shared'
 import { DownloadCancelledError } from './client/sync'
 
@@ -12,11 +12,39 @@ const session = new Session()
 const configStore = new ConfigStore()
 let mainWindow: BrowserWindow | null = null
 let currentConfig: AppConfig | null = null
+let hostPresets: HostPreset[] = []
 let pendingTrust: { pem: string; fingerprint: string } | null = null
 const userDataRoot = (): string => app.getPath('userData')
 
+const EMPTY_CFG: AppConfig = { configured: false, name: '', serverIp: '', port: 0, useTls: false }
+
+function hostId(cfg: { serverIp: string; port: number; useTls: boolean }): string {
+  return `${cfg.useTls ? 'https' : 'http'}://${cfg.serverIp}:${cfg.port}`
+}
+
+/**
+ * Add or update the entry for this connection in the saved-hosts registry.
+ * The friendly name comes from the server itself (see adoptServerHostName) —
+ * people can't set a host name in the GUI anymore, so keep any previously
+ * saved one until the server's name arrives, then the IP as a last resort.
+ */
+function upsertHost(cfg: AppConfig): HostPreset[] {
+  const id = hostId(cfg)
+  const existing = hostPresets.find((h) => h.id === id)
+  const entry: HostPreset = {
+    id,
+    name: existing?.name?.trim() || cfg.serverIp || 'Server',
+    serverIp: cfg.serverIp,
+    port: cfg.port,
+    useTls: cfg.useTls
+  }
+  return existing
+    ? hostPresets.map((h) => (h.id === id ? entry : h))
+    : [...hostPresets, entry]
+}
+
 function buildState(): ClientState {
-  const cfg = currentConfig ?? { configured: false, name: '', serverIp: '', port: 0, useTls: false }
+  const cfg = currentConfig ?? EMPTY_CFG
   const sync = session.sync?.info
   let health = null as ClientState['health']
   let org = null as ClientState['org']
@@ -37,14 +65,31 @@ function buildState(): ClientState {
   return {
     appConfig: cfg, health, org, connection, syncState, error, serverRev,
     downloaded,
+    hosts: hostPresets,
     mirrorRoot: session.sync?.mirrorRootDisplay() ?? null
   }
 }
 
 function pushState(): void {
+  adoptServerHostName()
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('app:state', buildState())
   }
+}
+
+/**
+ * The server reports its own host name on /api/health; use it as the friendly
+ * name for the active host (the GUI no longer lets people type one). Quiet —
+ * it just keeps the saved-hosts list labelled, never touching org data.
+ */
+function adoptServerHostName(): void {
+  const hostName = session.sync?.info.health?.hostName?.trim()
+  if (!hostName || !currentConfig) return
+  const id = hostId(currentConfig)
+  const existing = hostPresets.find((h) => h.id === id)
+  if (!existing || existing.name === hostName) return
+  hostPresets = hostPresets.map((h) => (h.id === id ? { ...h, name: hostName } : h))
+  void configStore.save({ config: currentConfig, hosts: hostPresets }).catch(() => undefined)
 }
 
 function pushUploadProgress(p: UploadProgress): void {
@@ -90,8 +135,14 @@ function createWindow(): void {
 }
 
 async function boot(config?: AppConfig): Promise<void> {
-  const cfg = config ?? (await configStore.load())
-  currentConfig = cfg
+  if (config) {
+    currentConfig = config
+  } else {
+    const data = await configStore.load()
+    currentConfig = data.config
+    hostPresets = data.hosts
+  }
+  const cfg = currentConfig
   if (cfg.configured) {
     await session.boot(cfg, userDataRoot())
   } else {
@@ -121,8 +172,33 @@ ipcMain.handle('onboarding:save', async (_e, cfg: AppConfig) => {
     serverIp: cleanerIp(String(cfg.serverIp ?? '').trim()),
     useTls: cfg.useTls === true
   }
-  await configStore.save(clean)
+  hostPresets = upsertHost(clean)
+  await configStore.save({ config: clean, hosts: hostPresets })
   await boot(clean)
+  return true
+})
+
+// ---- saved hosts (quick server switching) -------------------------------------
+
+ipcMain.handle('hosts:switch', async (_e, id: string) => {
+  const host = hostPresets.find((h) => h.id === id)
+  if (!host) throw new Error('unknown host')
+  const cfg: AppConfig = {
+    configured: true,
+    name: currentConfig?.name?.trim() || 'someone',
+    serverIp: host.serverIp,
+    port: host.port,
+    useTls: host.useTls
+  }
+  await configStore.save({ config: cfg, hosts: hostPresets })
+  await boot(cfg)
+  return true
+})
+
+ipcMain.handle('hosts:remove', async (_e, id: string) => {
+  hostPresets = hostPresets.filter((h) => h.id !== id)
+  await configStore.save({ config: currentConfig ?? EMPTY_CFG, hosts: hostPresets })
+  pushState()
   return true
 })
 

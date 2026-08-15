@@ -19,6 +19,7 @@ export default function App() {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [newSectionOpen, setNewSectionOpen] = useState(false)
   const [serverOpen, setServerOpen] = useState(false)
+  const [addServerOpen, setAddServerOpen] = useState(false)
 
   useEffect(() => initStore(), [])
 
@@ -68,6 +69,8 @@ export default function App() {
         onRefresh={() => void run(window.solidsync.refresh())}
         onOpenMirror={() => void window.solidsync.revealRoot()}
         onOpenServer={() => setServerOpen(true)}
+        onSwitchHost={(id) => void run(window.solidsync.switchHost(id))}
+        onAddServer={() => setAddServerOpen(true)}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -112,7 +115,7 @@ export default function App() {
               section={sel.section}
               selectedPartId={partId}
               syncState={state.syncState}
-              onPickPart={setPartId}
+              onPickPart={(id) => setPartId((cur) => (cur === id ? null : id))}
               onError={(m) => show(m)}
             />
           ) : (
@@ -166,6 +169,7 @@ export default function App() {
             onCancelDownload={(versionId) => {
               void window.solidsync.cancelDownload(versionId)
             }}
+            onClose={() => setPartId(null)}
           />
         )}
       </div>
@@ -213,6 +217,19 @@ export default function App() {
           onClose={() => setServerOpen(false)}
           onSaved={() => {
             setServerOpen(false)
+            setProjectId(null)
+            setSectionId(null)
+            setPartId(null)
+          }}
+        />
+      )}
+
+      {addServerOpen && (
+        <ServerSettingsModal
+          empty
+          onClose={() => setAddServerOpen(false)}
+          onSaved={() => {
+            setAddServerOpen(false)
             setProjectId(null)
             setSectionId(null)
             setPartId(null)

@@ -62,11 +62,24 @@ export interface AppConfig {
   useTls: boolean
 }
 
+// A saved server the client can switch back to. `id` is the canonical
+// scheme://ip:port key; `name` is an optional friendly label.
+export interface HostPreset {
+  id: string
+  name: string
+  serverIp: string
+  port: number
+  useTls: boolean
+}
+
 export type ConnectionState = 'connecting' | 'online' | 'offline'
 
 export interface Health {
   ok: boolean
   orgName: string
+  // The server's self-reported host name (set via `serve --hostname`, or a
+  // random fallback). Optional so old servers don't break newer clients.
+  hostName?: string
   rev: number
   serverTime: string
   version: string
@@ -112,4 +125,6 @@ export interface ClientState {
   mirrorRoot: string | null
   // version ids whose files exist on this machine's drive (per-part downloads)
   downloaded: string[]
+  // saved servers the user can switch back to
+  hosts: HostPreset[]
 }

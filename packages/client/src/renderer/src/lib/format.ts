@@ -33,3 +33,25 @@ export function formatClock(iso: string): string {
     minute: '2-digit'
   })
 }
+
+const URL_RE = /^(https?):\/\/([^/:]+)(?::(\d+))?(?:\/.*)?$/i
+const HOST_PORT_RE = /^([^/:]+):(\d{2,5})$/
+
+/**
+ * Accept a pasted server URL ("http://192.168.1.50:3020") or "host:port" and
+ * split it into parts. Returns null when the input isn't a full link, so plain
+ * typing of an IP is left untouched.
+ */
+export function parseServerInput(
+  raw: string
+): { host: string; port: number | null; tls: boolean | null } | null {
+  const m = URL_RE.exec(raw.trim())
+  if (m) {
+    return { host: m[2], port: m[3] ? Number(m[3]) : null, tls: m[1].toLowerCase() === 'https' }
+  }
+  const hp = HOST_PORT_RE.exec(raw.trim())
+  if (hp) {
+    return { host: hp[1], port: Number(hp[2]), tls: null }
+  }
+  return null
+}
