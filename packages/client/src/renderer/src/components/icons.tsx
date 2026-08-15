@@ -77,11 +77,22 @@ export function IconFolderOpen(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-export function IconCopy(props: SVGProps<SVGSVGElement>) {
+export function IconArchive(props: SVGProps<SVGSVGElement>) {
   return (
     <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="6" y="6" width="8" height="8" rx="1.5" />
-      <path d="M10 4v-0.5A1.5 1.5 0 0 0 8.5 2h-5A1.5 1.5 0 0 0 2 3.5v5A1.5 1.5 0 0 0 3.5 10H4" />
+      <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h7A1.5 1.5 0 0 1 13 4.5V6l-1 5H4L3 6V4.5Z" />
+      <path d="M3 6h10" />
+      <path d="M7 9h2" />
     </svg>
   )
 }
+
+export function IconRestore(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M8 13.5a5.5 5.5 0 1 1 3.9-9.4" />
+      <path d="M12 2.5v2.6H9.4" />
+    </svg>
+  )
+}
+

@@ -46,6 +46,8 @@ solidsync-server serve --port 3020 --name "Fab Shop"
 | `import FILE` | Throw a file into a section on a running server |
 | `status PARTID` | Show/stamp a part's work status |
 | `branch PROJECT` | Start an independent copy of a project |
+| `archive PROJECT` | Move a project into the Archived section |
+| `unarchive PROJECT` | Bring an archived project back |
 | `backup [FILE]` | Snapshot the whole org into one archive |
 | `version` | Print the server version |
 

@@ -80,6 +80,22 @@ export function createApp(store: OrgStore, opts: { caPem?: string } = {}): expre
     res.json({ ok: true })
   }))
 
+  app.post('/api/projects/:projectId/archive', wrap(async (req, res) => {
+    const projectId = String(req.params.projectId)
+    if (!store.getOrgSnapshot().projects.some((p) => p.id === projectId))
+      return replyError(res, 404, 'project not found')
+    await store.archiveProject(projectId)
+    res.json({ ok: true })
+  }))
+
+  app.post('/api/projects/:projectId/unarchive', wrap(async (req, res) => {
+    const projectId = String(req.params.projectId)
+    if (!store.getOrgSnapshot().projects.some((p) => p.id === projectId))
+      return replyError(res, 404, 'project not found')
+    await store.unarchiveProject(projectId)
+    res.json({ ok: true })
+  }))
+
   app.post('/api/projects/:projectId/copy', wrap(async (req, res) => {
     const sourceId = String(req.params.projectId)
     const source = store.getOrgSnapshot().projects.find((p) => p.id === sourceId)

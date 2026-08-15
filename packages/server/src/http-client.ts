@@ -93,6 +93,20 @@ export class ServerClient {
     }).then((r) => parse<void>(r))
   }
 
+  async archiveProject(projectId: string): Promise<void> {
+    await this.req(`/api/projects/${projectId}/archive`, {
+      method: 'POST',
+      headers: this.jsonHeaders()
+    }).then((r) => parse<void>(r))
+  }
+
+  async unarchiveProject(projectId: string): Promise<void> {
+    await this.req(`/api/projects/${projectId}/unarchive`, {
+      method: 'POST',
+      headers: this.jsonHeaders()
+    }).then((r) => parse<void>(r))
+  }
+
   async branchProject(opts: { projectId: string; name?: string }): Promise<{ projectId: string; name: string }> {
     const body = await this.req(`/api/projects/${opts.projectId}/copy`, {
       method: 'POST',

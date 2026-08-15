@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { OrgStore } from '../src/store'
 import { Repo } from '../src/git'
+import { loadSqlJs } from '../src/wasm'
 import { hashBytes, id6, sha1File } from '../src/lib/hash'
 
 let tmp: string
@@ -120,6 +121,51 @@ describe('OrgStore', () => {
     const { projectId, sectionId } = await newProject('OwnParent')
     const v = await ingest({ projectId, sectionId, fileName: 'z.sldprt', content: 'zz', by: 'z' })
     await expect(store.enqueue(async () => store.rawSetParent(v.partId, v.partId))).rejects.toThrow()
+  })
+
+  it('archives and unarchives a project', async () => {
+    const { projectId } = await newProject('ArchiveMe')
+    expect(store.getOrgSnapshot().projects.find((p) => p.id === projectId)!.archived).toBe(false)
+    await store.archiveProject(projectId)
+    expect(store.getOrgSnapshot().projects.find((p) => p.id === projectId)!.archived).toBe(true)
+    await store.unarchiveProject(projectId)
+    expect(store.getOrgSnapshot().projects.find((p) => p.id === projectId)!.archived).toBe(false)
+  })
+
+  it('archiving bumps the org rev', async () => {
+    const { projectId } = await newProject('ArchiveRev')
+    const before = store.getRev()
+    await store.archiveProject(projectId)
+    expect(store.getRev()).toBe(before + 1)
+  })
+
+  it('branched copies of an archived project are active', async () => {
+    const { projectId, sectionId } = await newProject('ArchiveBranch')
+    await ingest({ projectId, sectionId, fileName: 'axle.sldprt', content: 'axle-v1', by: 'ana' })
+    await store.archiveProject(projectId)
+    const copy = await store.branchProject(projectId, 'Copy of archived')
+    const copyRow = store.getOrgSnapshot().projects.find((p) => p.id === copy.projectId)!
+    expect(copyRow.archived).toBe(false)
+  })
+
+  it('migrates a pre-archive database by adding the archived column', async () => {
+    const dir = path.join(tmp, 'migrate-v2')
+    await mkdir(dir, { recursive: true })
+    const sql = await loadSqlJs()
+    const old = new sql.Database()
+    old.run(
+      `CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL);`
+    )
+    old.run(`INSERT INTO projects(id,name,created_at) VALUES('p000000','Old Shop','2026-01-01T00:00:00.000Z')`)
+    await writeFile(path.join(dir, 'solidsync.db'), Buffer.from(old.export()))
+    old.close()
+
+    const migrated = await OrgStore.open(dir, 'Migrated')
+    const row = migrated.getOrgSnapshot().projects.find((p) => p.id === 'p000000')!
+    expect(row.archived).toBe(false)
+    await migrated.archiveProject('p000000')
+    expect(migrated.getOrgSnapshot().projects.find((p) => p.id === 'p000000')!.archived).toBe(true)
+    await migrated.close()
   })
 
   it('starts an independent copy of a project', async () => {

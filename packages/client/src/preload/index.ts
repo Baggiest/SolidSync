@@ -33,10 +33,12 @@ const api = {
 
   // actions
   createProject: (name: string): Promise<unknown> => ipcRenderer.invoke('action:createProject', name),
-  startMyCopy: (projectId: string): Promise<unknown> =>
-    ipcRenderer.invoke('action:startMyCopy', { projectId }),
   createSection: (projectId: string, name: string): Promise<unknown> =>
     ipcRenderer.invoke('action:createSection', projectId, name),
+  archiveProject: (projectId: string): Promise<unknown> =>
+    ipcRenderer.invoke('action:archiveProject', projectId),
+  unarchiveProject: (projectId: string): Promise<unknown> =>
+    ipcRenderer.invoke('action:unarchiveProject', projectId),
   throwIn: (opts: { projectId: string; sectionId: string; filePath: string; parentId?: string | null }): Promise<unknown> =>
     ipcRenderer.invoke('action:throwIn', opts),
   saveVersion: (opts: { projectId: string; partId: string; filePath: string }): Promise<unknown> =>

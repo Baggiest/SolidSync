@@ -77,21 +77,25 @@ export class SolidSyncApi {
     return (body as { sectionId: string }).sectionId
   }
 
-  /** Start an independent working copy of a project (spec §6). */
-  async branchProject(opts: { projectId: string; name?: string }): Promise<{ projectId: string; name: string }> {
-    const body = await this.req(`/api/projects/${opts.projectId}/copy`, {
-      method: 'POST',
-      headers: this.jsonHeaders(),
-      body: JSON.stringify({ name: opts.name ?? '' })
-    }).then((r) => parse<ServerBody>(r))
-    return { projectId: body.projectId ?? '', name: body.name ?? '' }
-  }
-
   async setWorkStatus(partId: string, workStatus: WorkStatus): Promise<void> {
     await this.req(`/api/parts/${partId}/status`, {
       method: 'PUT',
       headers: this.jsonHeaders(),
       body: JSON.stringify({ workStatus })
+    }).then((r) => parse<void>(r))
+  }
+
+  async archiveProject(projectId: string): Promise<void> {
+    await this.req(`/api/projects/${projectId}/archive`, {
+      method: 'POST',
+      headers: this.jsonHeaders()
+    }).then((r) => parse<void>(r))
+  }
+
+  async unarchiveProject(projectId: string): Promise<void> {
+    await this.req(`/api/projects/${projectId}/unarchive`, {
+      method: 'POST',
+      headers: this.jsonHeaders()
     }).then((r) => parse<void>(r))
   }
 

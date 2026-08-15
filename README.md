@@ -41,9 +41,14 @@ ORG  →  PROJECTS  →  SECTIONS  →  PARTS
   **work status** (Red = don't touch, Yellow = ask first, Green = ready).
   Both show directly in the section listing. A part can be perfectly synced but
   flagged red (owner mid-change), or out of sync but green (network hiccup).
-- **Start my own copy** — an individual can make an independent working copy of
-  a whole project to develop on their own. No merging exists anywhere on
-  purpose.
+- **Strict mirror, no local authority** — the GUI shows exactly what's on the
+  server and nothing else. Delete a project on the server and it disappears
+  from every client's GUI and local mirror after the next sync. There is no
+  duplicate / "start my own copy" action anywhere in the client.
+- **Archive / restore projects** — move a finished project out of the active
+  list into an **Archived** section in the sidebar with one click. Nothing is
+  deleted: the project stays on the server, fully browsable and still mirrored
+  by every client, and restores with a single click.
 - **Always-visible connection bar** — server IP, port, and a giant red
   disconnected banner, so a dropped connection is noticed from across the room.
 
@@ -58,7 +63,7 @@ saves blind.
 
 **Vocabulary.** The UI deliberately avoids VCS jargon — no commit/push/pull/
 merge/clone/checkout. The product says *throw in*, *save a version*, *set as
-head*, *sync*, *out of sync / current*, *start my own copy*.
+head*, *sync*, *out of sync / current*.
 
 ## Install the client
 
@@ -85,8 +90,8 @@ runs on any PC on the shop floor and needs nothing but itself.
 installer, the `.desktop` entry, and the in-app window icon. The repo ships a
 placeholder — overwrite it before shipping.
 
-On first run, enter your name and pick **Join an org**, then type the address
-your admin printed when they started the server (`http://<LAN-IP>:3020`).
+On first run, enter your name and type the address your admin printed when
+they started the server (`http://<LAN-IP>:3020`).
 
 ## Host the server
 
@@ -122,13 +127,15 @@ solidsync-server serve --port 3020 --name "Fab Shop"
 - **Backups:** `solidsync-server backup` snapshots the whole org into one
   archive, or just copy the `--dir` folder.
 - **More commands:** `init`, `health`, `list`, `import FILE`, `status PARTID`,
-  `branch PROJECT`, `version` — see `solidsync-server --help`.
+  `branch PROJECT` (server-side project copy — admin only, not exposed in the
+  GUI), `archive PROJECT` / `unarchive PROJECT`, `version` — see
+  `solidsync-server --help`.
 
 ## Running it
 
-First run shows a one-time setup: enter your name, choose **Host the org**
-(run the shop server on this machine) or **Join an org** (point at a teammate's
-IP and port). No account, no password.
+First run shows a one-time setup: enter your name and point at the shop server
+(IP and port). No account, no password. The client never hosts the org — it is
+a mirror of whatever the server has.
 
 Requires:
 
@@ -177,26 +184,29 @@ TOFU (trust on first use):
 
 ## Where data lives
 
-Everything is under the app's user-data folder (e.g. `%APPDATA%/SolidSync` on
-Windows).
+The client stores only what it needs to talk to and mirror the server. The org
+itself lives on the server machine.
 
 ```
-userData/
-├── config.json          # this machine's setup (name, mode, IP, port)
-├── server-ca.pem        # pinned server CA (HTTPS trust, client mode)
-├── org/                 # host-mode org
-│   ├── solidsync.db      # metadata: projects, sections, parts, versions, statuses
-│   ├── tls/              # generated CA + server cert (when serving with --tls)
-│   └── repos/<projectId>/   # one git repo per project holding the file bytes
-└── mirror/              # client-mode local copies, one git repo per project
+Client machine — user-data folder (e.g. %APPDATA%/SolidSync on Windows):
+├── config.json          # this machine's setup (name, server IP, port)
+├── server-ca.pem        # pinned server CA (HTTPS trust)
+└── mirror/<projectId>/  # local mirror of the server's projects, one git repo each
+
+Server machine — SOLIDSYNC_DIR (default ~/.solidsync):
+├── solidsync.db          # metadata: projects, sections, parts, versions, statuses
+├── tls/                  # generated CA + server cert (when serving with --tls)
+└── repos/<projectId>/    # one git repo per project holding the file bytes
 ```
 
-- Metadata is a single SQLite file (`sql.js`) — trivially backed up by copying
-  it; the org is the whole `org/` folder.
+- Metadata is a single SQLite file (`sql.js`) on the server — trivially backed
+  up by copying it; the org is the whole server data folder.
 - File bytes are committed into per-project git repos, so every version is
   recoverable from history.
-- Each client keeps its own local mirror (backed by `isomorphic-git`) so
-  browsing works offline and reconnects reconcile on the next poll.
+- Each client keeps a local mirror (backed by `isomorphic-git`) so browsing
+  works offline. The mirror only ever reflects the server: anything that
+  disappears from the server is pruned from the mirror and vanishes from the
+  GUI on the next sync.
 
 ## Architecture
 
@@ -210,17 +220,17 @@ userData/
 │                              │  │    reconciles mirror   │ │
 │                              │  └───┬────────────────────┘ │
 └──────────────────────────────┼──────┼─────────────────────┘
-                    host mode  │      │ client mode
-                    0.0.0.0    ▼      ▼ (http/https)
-                       ┌──────────────────────────┐
-                       │  Express REST server      │
-                       │  ├─ sql.js (SQLite)       │
-                       │  └─ git binary (repos)    │
-                       └──────────────────────────┘
+                               ▼ (http/https)
+                        ┌──────────────────────────┐
+                        │  Express REST server      │
+                        │  ├─ sql.js (SQLite)       │
+                        │  └─ git binary (repos)    │
+                        └──────────────────────────┘
 ```
 
 - **The server is the single source of truth.** The GUI never decides — it
-  reflects and requests, the server answers.
+  reflects and requests, the server answers. Anything deleted on the server
+  disappears from every client's GUI and mirror on the next sync.
 - Plain JSON over HTTP (or HTTPS with `--tls`); no websockets. Clients poll
   `/api/health` every few seconds and refetch the org snapshot when the
   revision number moves.

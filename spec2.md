@@ -25,7 +25,7 @@ connecting to it over the local network.**
               ▼               ▼               ▼
    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
    │ SolidSync GUI │ │ SolidSync GUI │ │ SolidSync GUI │  one per engineer
-   │ (client)     │ │ (client)     │ │ (client)     │  local mirror, offline-capable
+   │ (client)     │ │ (client)     │ │ (client)     │  strict mirror, offline-capable
    └──────────────┘ └──────────────┘ └──────────────┘
 ```
 
@@ -86,6 +86,8 @@ solidsync-server <command> [options]
   import   --url ... --project <id> --file <path> [--section <id>]
            [--user <name>] [--parent <id>]     throw a file in
   status   --url ... --part <id> [--set red|yellow|green]  read/write work status
+  archive  --url ... PROJECT   move a project into the Archived section
+  unarchive --url ... PROJECT  bring an archived project back
   backup   --dir <path> --out <archive.zip>    zip DB + repos
   version  print version
 ```
@@ -115,7 +117,9 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
 - **CLI ↔ GUI parity** — anything the GUI can do over HTTP, the CLI can, so
   server-side maintenance doesn't require a display.
 - **Client stays offline-capable** — local isomorphic-git mirror, reconcile on
-  reconnect (existing SyncService behavior, unchanged).
+  reconnect. The mirror is a strict mirror of the server: content that vanishes
+  from the server (e.g. a deleted project) is pruned from the mirror and
+  disappears from the GUI on the next sync.
 
 ## 6. Client changes (strip the host mode)
 
@@ -125,8 +129,18 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
   "Hosting" badge and host-address logic are removed.
 - `Session` becomes: `SyncService(config.name, mirrorRoot)` pointed at the
   server. `config.ts`, `index.ts`, `session.ts` simplified.
-- All part/section/version/work-status/branch actions go over HTTP to the
-  server, exactly as today.
+- The **"start my own copy" (duplicate) action is removed from the client** —
+  the button, IPC, preload bridge, and API method are gone. The client has no
+  way to copy a project; the server-side `/copy` endpoint and `branch` CLI
+  command remain as admin-only operations.
+- **Archive / restore projects.** Each project row gains an archive button; an
+  **Archived** section in the sidebar lists archived projects with a restore
+  button. The archived flag is server state (`projects.archived`, schema v3),
+  read straight from the org snapshot — the client never decides what's
+  archived. Archived projects stay in the snapshot (still mirrored and
+  browsable), they just move to a different sidebar section.
+- All part/section/version/work-status actions go over HTTP to the server,
+  exactly as today.
 
 ## 7. Shared package
 

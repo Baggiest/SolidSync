@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useClientState } from '../lib/store'
-import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconCopy } from './icons'
-import { VOCAB } from '@solidsync/shared'
+import { IconChevron, IconFolder, IconPlus, IconRefresh, IconFolderOpen, IconArchive, IconRestore } from './icons'
 
 export function TopBar(props: { onRefresh: () => void; onOpenMirror: () => void; onOpenServer: () => void }) {
   const state = useClientState()
@@ -73,10 +72,91 @@ export function SideNav(props: {
   onSelectSection: (projectId: string, sectionId: string) => void
   onNewProject: () => void
   onNewSection: (projectId: string) => void
-  onStartMyCopy: (projectId: string) => void
+  onArchive: (projectId: string) => void
+  onUnarchive: (projectId: string) => void
 }) {
   const { org } = useClientState()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [archivedOpen, setArchivedOpen] = useState(false)
+
+  const active = (org?.projects ?? []).filter((p) => !p.archived)
+  const archived = (org?.projects ?? []).filter((p) => p.archived)
+
+  const renderProject = (project: ProjectRow, archivedRow: boolean) => {
+    const open = collapsed[project.id] !== true
+    const activeProject = props.selectedProjectId === project.id
+    return (
+      <div key={project.id}>
+        <div
+          className={`group flex cursor-pointer items-center gap-1.5 px-2 py-1.5 text-sm ${
+            activeProject ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-800/60'
+          }`}
+          onClick={() => {
+            setCollapsed((c) => ({ ...c, [project.id]: open }))
+            const firstSection = project.sections[0]
+            if (firstSection) props.onSelectSection(project.id, firstSection.id)
+          }}
+        >
+          <IconChevron className={`h-3.5 w-3.5 text-zinc-500 ${open ? 'rotate-90' : ''}`} />
+          <IconFolder className={`h-4 w-4 ${archivedRow ? 'text-zinc-600' : 'text-zinc-400'}`} />
+          <span className="flex-1 truncate">{project.name}</span>
+          {archivedRow ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                props.onUnarchive(project.id)
+              }}
+              className="rounded p-0.5 text-zinc-500 opacity-0 hover:text-zinc-100 group-hover:opacity-100"
+              title="Restore project"
+            >
+              <IconRestore className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  props.onArchive(project.id)
+                }}
+                className="rounded p-0.5 text-zinc-500 opacity-0 hover:text-zinc-100 group-hover:opacity-100"
+                title="Archive project"
+              >
+                <IconArchive className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  props.onNewSection(project.id)
+                }}
+                className="rounded p-0.5 text-zinc-500 opacity-0 hover:text-zinc-100 group-hover:opacity-100"
+                title="New section"
+              >
+                <IconPlus className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+        </div>
+        {open && (
+          <div className="ml-4 border-l border-zinc-800/70 pl-1">
+            {project.sections.map((section) => (
+              <div
+                key={section.id}
+                onClick={() => props.onSelectSection(project.id, section.id)}
+                className={`cursor-pointer rounded px-2 py-1 text-[13px] ${
+                  props.selectedProjectId === project.id && props.selectedSectionId === section.id
+                    ? 'bg-zinc-800 text-zinc-100'
+                    : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                }`}
+              >
+                <span className="mr-1 text-zinc-600">▸</span>
+                {section.name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -94,73 +174,38 @@ export function SideNav(props: {
       </div>
 
       <div className="flex-1 overflow-y-auto py-1">
-        {!org || org.projects.length === 0 ? (
+        {active.length === 0 && archived.length === 0 ? (
           <div className="px-3 py-4 text-xs leading-5 text-zinc-500">
             No projects yet. Start one, then drop a file into a section to throw a part in.
           </div>
         ) : (
-          org.projects.map((project) => {
-            const open = collapsed[project.id] !== true
-            const activeProject = props.selectedProjectId === project.id
-            return (
-              <div key={project.id}>
+          <>
+            {active.length > 0 && active.map((p) => renderProject(p, false))}
+            {archived.length > 0 && (
+              <div className="mt-2">
                 <div
-                  className={`group flex cursor-pointer items-center gap-1.5 px-2 py-1.5 text-sm ${
-                    activeProject ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-800/60'
-                  }`}
-                  onClick={() => {
-                    setCollapsed((c) => ({ ...c, [project.id]: open }))
-                    const firstSection = project.sections[0]
-                    if (firstSection) props.onSelectSection(project.id, firstSection.id)
-                  }}
+                  className="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-500 hover:text-zinc-300"
+                  onClick={() => setArchivedOpen((o) => !o)}
+                  title={archivedOpen ? 'Hide archived projects' : 'Show archived projects'}
                 >
-                  <IconChevron className={`h-3.5 w-3.5 text-zinc-500 ${open ? 'rotate-90' : ''}`} />
-                  <IconFolder className="h-4 w-4 text-zinc-400" />
-                  <span className="flex-1 truncate">{project.name}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      props.onStartMyCopy(project.id)
-                    }}
-                    className="rounded p-0.5 text-zinc-500 opacity-0 hover:text-zinc-100 group-hover:opacity-100"
-                    title={VOCAB.ownCopy}
-                  >
-                    <IconCopy className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      props.onNewSection(project.id)
-                    }}
-                    className="rounded p-0.5 text-zinc-500 opacity-0 hover:text-zinc-100 group-hover:opacity-100"
-                    title="New section"
-                  >
-                    <IconPlus className="h-3.5 w-3.5" />
-                  </button>
+                  <IconChevron className={`h-3 w-3 text-zinc-600 ${archivedOpen ? 'rotate-90' : ''}`} />
+                  <IconArchive className="h-3.5 w-3.5" />
+                  Archived
+                  <span className="text-zinc-600">({archived.length})</span>
                 </div>
-                {open && (
-                  <div className="ml-4 border-l border-zinc-800/70 pl-1">
-                    {project.sections.map((section) => (
-                      <div
-                        key={section.id}
-                        onClick={() => props.onSelectSection(project.id, section.id)}
-                        className={`cursor-pointer rounded px-2 py-1 text-[13px] ${
-                          props.selectedProjectId === project.id && props.selectedSectionId === section.id
-                            ? 'bg-zinc-800 text-zinc-100'
-                            : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
-                        }`}
-                      >
-                        <span className="mr-1 text-zinc-600">▸</span>
-                        {section.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {archivedOpen && archived.map((p) => renderProject(p, true))}
               </div>
-            )
-          })
+            )}
+          </>
         )}
       </div>
     </aside>
   )
+}
+
+interface ProjectRow {
+  id: string
+  name: string
+  archived: boolean
+  sections: { id: string; name: string }[]
 }

@@ -107,6 +107,26 @@ describe('REST API', () => {
     expect(h2.rev).toBeGreaterThan(h.rev)
   })
 
+  it('archives and unarchives a project over HTTP', async () => {
+    const projectId = await api.createProject('ArchiveHTTP')
+    let org = await api.getOrg()
+    expect(org.projects.find((p) => p.id === projectId)!.archived).toBe(false)
+
+    await api.archiveProject(projectId)
+    org = await api.getOrg()
+    expect(org.projects.find((p) => p.id === projectId)!.archived).toBe(true)
+    expect((await api.health()).rev).toBeGreaterThan((await api.health()).rev - 1)
+
+    await api.unarchiveProject(projectId)
+    org = await api.getOrg()
+    expect(org.projects.find((p) => p.id === projectId)!.archived).toBe(false)
+  })
+
+  it('archiving an unknown project returns an error', async () => {
+    await expect(api.archiveProject('p000000')).rejects.toThrow()
+    await expect(api.unarchiveProject('p000000')).rejects.toThrow()
+  })
+
   it('hash-identical re-throws create a new version on the same part', async () => {
     const projectId = await api.createProject('Dedupe')
     const org = await api.getOrg()

@@ -122,9 +122,11 @@ export class SyncService {
     this.emit()
     try {
       const org = await this.api.getOrg()
-      await this.reconcileMirror(org)
+      // The GUI reflects the server snapshot as-is; the mirror is just a cache.
+      // Even if mirroring fails, the server stays the source of truth on screen.
       this.info.org = org
       this.info.serverRev = org.rev
+      await this.reconcileMirror(org)
       this.info.syncState = 'synced'
       this.info.error = null
     } catch (err) {
@@ -137,6 +139,12 @@ export class SyncService {
   }
 
   private async reconcileMirror(org: OrgSnapshot): Promise<void> {
+    // Mirror only what the server has: drop local projects that vanished server-side.
+    const live = new Set(org.projects.map((p) => p.id))
+    const local = await this.mirror.listProjects()
+    for (const id of local) {
+      if (!live.has(id)) await this.mirror.removeProject(id)
+    }
     for (const project of org.projects) {
       await this.mirror.ensureProject(project.id)
       const desired = Mirror.desiredFiles(project)
@@ -176,10 +184,6 @@ export class SyncService {
     await this.act(() => this.api.createProject(name))
   }
 
-  async startMyCopy(opts: { projectId: string; name?: string }): Promise<void> {
-    await this.act(() => this.api.branchProject(opts))
-  }
-
   async createSection(projectId: string, name: string): Promise<void> {
     await this.act(() => this.api.createSection(projectId, name))
   }
@@ -194,6 +198,14 @@ export class SyncService {
 
   async setWorkStatus(partId: string, status: Parameters<SolidSyncApi['setWorkStatus']>[1]): Promise<void> {
     await this.act(() => this.api.setWorkStatus(partId, status))
+  }
+
+  async archiveProject(projectId: string): Promise<void> {
+    await this.act(() => this.api.archiveProject(projectId))
+  }
+
+  async unarchiveProject(projectId: string): Promise<void> {
+    await this.act(() => this.api.unarchiveProject(projectId))
   }
 
   async setHead(partId: string, versionId: string): Promise<void> {

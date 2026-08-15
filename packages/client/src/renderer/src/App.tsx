@@ -84,14 +84,23 @@ export default function App() {
             setProjectId(pid)
             setNewSectionOpen(true)
           }}
-          onStartMyCopy={(pid) => {
+          onArchive={(pid) => {
+            const name = state.org?.projects.find((p) => p.id === pid)?.name ?? ''
             void (async () => {
-              const err = await doAction(window.solidsync.startMyCopy(pid))
+              const err = await doAction(window.solidsync.archiveProject(pid))
               if (err) show(err)
               else {
-                show('Started your own copy.', 'ok')
+                show(`Archived "${name}"`, 'ok')
                 setPartId(null)
               }
+            })()
+          }}
+          onUnarchive={(pid) => {
+            const name = state.org?.projects.find((p) => p.id === pid)?.name ?? ''
+            void (async () => {
+              const err = await doAction(window.solidsync.unarchiveProject(pid))
+              if (err) show(err)
+              else show(`Restored "${name}"`, 'ok')
             })()
           }}
         />

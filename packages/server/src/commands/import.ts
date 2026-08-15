@@ -19,12 +19,12 @@ export async function runImport(o: CommandOptions, filePath?: string): Promise<n
   let project = org.projects.find((p) => p.name === o.project)
   if (!project && o.project) {
     const projectId = await client.createProject(o.project)
-    project = { id: projectId, name: o.project, sections: [] }
+    project = { id: projectId, name: o.project, archived: false, sections: [] }
   } else if (!project) {
     project = org.projects[0]
     if (!project) {
       const projectId = await client.createProject('Shop')
-      project = { id: projectId, name: 'Shop', sections: [] }
+      project = { id: projectId, name: 'Shop', archived: false, sections: [] }
     }
   }
   let section = project.sections.find((s) => s.name === o.section)

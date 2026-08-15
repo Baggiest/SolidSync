@@ -15,7 +15,7 @@ ORG → PROJECTS → SECTIONS → PARTS
 ```
 
 - **Org** — one server, one hosted endpoint. An org is a single install.
-- **Project** — a folder-equivalent. Maps to one thing being built. Can be branched by an individual (see Section 6).
+- **Project** — a folder-equivalent. Maps to one thing being built. Can be archived (see Section 7).
 - **Section** — a grouping inside a project (e.g. a subsystem area). Parts live here.
 - **Part** — a single file with a 6-digit ID, two independent statuses, a head version, and full history.
 
@@ -82,13 +82,33 @@ Both statuses display directly in the section listing — not one click deeper.
 
 - Every submission is a new entry in that Part's history — a version story, oldest to newest.
 - **Head** is a pointer: "this is the version currently in use." Re-pointing Head is a distinct, low-friction action, separate from submitting a new file.
-- **Branching happens at the Project level, per person.** An individual can branch a project to work on it independently. This is the one place branching exists in this system — it does not exist at the Part level, and Parts themselves stay linear.
+- **No branching in the client.** The GUI offers no duplicate / "start my own copy" action — every client shows exactly the server's view of the org. A server-side admin can still make an independent snapshot copy of a whole project (`solidsync-server branch PROJECT`); that is a server-side operation only and is not exposed to the GUI.
 - **No merging.** This is a deliberate limit, not a gap. There is no UI, workflow, or engine feature for combining two diverged histories of the same part.
 - **No complex assembly resolution.** The tool does not attempt to understand or auto-update cross-part references the way SolidWorks PDM does. That responsibility stays with the user, same as it does today.
 
 ---
 
-## 7. Why Conflicts Don't Really Happen Here
+## 7. Archiving Projects
+
+A Project can be moved out of the active list and into the **Archived** section of
+the sidebar — a soft state, not a delete.
+
+- **Archive** is a single click (the archive button on a project row). The
+  project stops showing under "Projects" and appears under "Archived".
+- **Restore** is a single click too — archived projects come back to the active
+  list with their sections, parts, versions, statuses, and head pointers intact.
+- **Archiving changes nothing about the data.** The project stays on the server,
+  fully browsable, still mirrored by every client (archived projects remain in
+  the org snapshot with an `archived` flag). It is purely a matter of
+  organization: out of the way, not gone.
+- The archived flag is server state (`projects.archived`), set through the API
+  (`POST /api/projects/:id/archive` and `/api/projects/:id/unarchive`) and the
+  CLI (`solidsync-server archive PROJECT` / `unarchive PROJECT`). Branched
+  copies of an archived project are always created active.
+
+---
+
+## 8. Why Conflicts Don't Really Happen Here
 
 Worth stating explicitly, since it's the load-bearing assumption behind skipping merge UI entirely:
 
@@ -97,21 +117,21 @@ Because each Part's history is independent and linear, and Parts aren't stitched
 - Work status (yellow/red) as the manual, social prevention mechanism.
 - Sync status making it visually obvious when a local copy isn't current, before someone submits blind.
 
-The tool's job in this scenario is to surface the divergence clearly (see Section 9, out-of-sync state) — not to attempt to resolve it.
+The tool's job in this scenario is to surface the divergence clearly (see Section 10, out-of-sync state) — not to attempt to resolve it.
 
 ---
 
-## 8. Vocabulary Constraints
+## 9. Vocabulary Constraints
 
 Because the target users are non-programmers and the goal is to avoid triggering git-shaped expectations:
 
 **Banned in UI:** commit, push, pull, merge, branch (as a verb toward the user — "branching" is fine as a described capability in documentation, but the button/action shouldn't say "Branch"), clone, checkout.
 
-**Use instead:** add / throw in / drop in, sync, update, save a version, set as head, start my own copy (for the branch action), out of sync / current.
+**Use instead:** add / throw in / drop in, sync, update, save a version, set as head, out of sync / current.
 
 ---
 
-## 9. Top Bar
+## 10. Top Bar
 
 Persistent, always visible, not buried in settings:
 
@@ -124,16 +144,17 @@ Persistent, always visible, not buried in settings:
 
 ---
 
-## 10. Client/Server Architecture
+## 11. Client/Server Architecture
 
 - **The GUI is a display and interface layer only.** It holds no independent authority over the data — it reflects and requests, the server decides.
 - **The server is the single source of truth**, hosted on one endpoint per org, reachable via the IP/port shown in the top bar.
-- Disconnection and desync handling follows git's model conceptually (local-first, reconcile-on-reconnect) even though git vocabulary is hidden from the user — see Section 7 for why this doesn't produce true conflicts in this system's data model.
+- **The client is a mirror, not an owner.** It shows exactly what the server has and nothing of its own. Anything deleted on the server stops appearing in every client — in the GUI and in the local mirror — after the next sync. There is no client-side duplicate / copy action.
+- Disconnection and desync handling follows git's model conceptually (local-first, reconcile-on-reconnect) even though git vocabulary is hidden from the user — see Section 8 for why this doesn't produce true conflicts in this system's data model.
 - **Platform: Windows, built in Electron.** Given that, prefer embedding the version-control engine as a library (e.g. isomorphic-git, or libgit2 via a native binding) over shelling out to a git CLI binary — cleaner integration, no external dependency to install alongside the app, and no CLI output to parse.
 
 ---
 
-## 11. Interaction Philosophy
+## 12. Interaction Philosophy
 
 - No login. No auth screen. Opening the app opens the tool.
 - Runs on minimal server hardware ("a potato") with a single open port.
@@ -142,9 +163,10 @@ Persistent, always visible, not buried in settings:
 
 ---
 
-## 12. Explicit Non-Goals
+## 13. Explicit Non-Goals
 
 - No merge UI or merge engine, at any level.
+- No client-side branching / duplicate / "start my own copy" action.
 - No complex assembly/reference resolution.
 - No login/auth system.
 - No cloud hosting requirement — self-hosted on commodity hardware is the target.

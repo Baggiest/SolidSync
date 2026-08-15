@@ -39,6 +39,7 @@ export interface SectionInfo {
 export interface ProjectInfo {
   id: string
   name: string
+  archived: boolean
   sections: SectionInfo[]
 }
 

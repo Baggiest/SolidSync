@@ -150,16 +150,23 @@ ipcMain.handle('action:createProject', async (_e, name: string) => {
   pushState()
 })
 
-ipcMain.handle('action:startMyCopy', async (_e, opts: { projectId: string }) => {
-  const s = await requireOnline()
-  if (!opts || typeof opts.projectId !== 'string') throw new Error('project required')
-  await s.sync!.startMyCopy({ projectId: opts.projectId })
-  pushState()
-})
-
 ipcMain.handle('action:createSection', async (_e, projectId: string, name: string) => {
   const s = await requireOnline()
   await s.sync!.createSection(projectId, String(name).trim() || 'New section')
+  pushState()
+})
+
+ipcMain.handle('action:archiveProject', async (_e, projectId: string) => {
+  const s = await requireOnline()
+  if (typeof projectId !== 'string' || !projectId) throw new Error('project required')
+  await s.sync!.archiveProject(projectId)
+  pushState()
+})
+
+ipcMain.handle('action:unarchiveProject', async (_e, projectId: string) => {
+  const s = await requireOnline()
+  if (typeof projectId !== 'string' || !projectId) throw new Error('project required')
+  await s.sync!.unarchiveProject(projectId)
   pushState()
 })
 

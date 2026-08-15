@@ -11,6 +11,7 @@ import { runList } from './commands/list'
 import { runImport } from './commands/import'
 import { runStatus } from './commands/status'
 import { runBranch } from './commands/branch'
+import { runArchive, runUnarchive } from './commands/archive'
 import { runBackup } from './commands/backup'
 import { runVersion } from './commands/version'
 
@@ -83,6 +84,8 @@ Commands:
   import FILE     Throw a file into a section on a running server.
   status PARTID   Print how current a part is; --set green|yellow|red stamps it.
   branch PROJECT  Start an independent copy of a project (the "my own copy" idea).
+  archive PROJECT Move a project out of the active list (server-side admin op).
+  unarchive PROJECT  Bring an archived project back into the active list.
   backup          Snapshot the whole org (DB + repos) into one archive.
   version         Print the server version.
 
@@ -148,6 +151,8 @@ export async function main(argv: string[]): Promise<number> {
     case 'import': return runImport(o, positionals[1])
     case 'status': return runStatus(o, positionals[1])
     case 'branch': return runBranch(o, positionals[1], positionals[2])
+    case 'archive': return runArchive(o, positionals[1])
+    case 'unarchive': return runUnarchive(o, positionals[1])
     case 'backup': return runBackup(o, positionals[1])
     case 'version': return runVersion()
     default:

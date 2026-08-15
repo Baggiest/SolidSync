@@ -8,11 +8,12 @@ import type { OrgSnapshot, PartInfo, WorkStatus, VersionInfo } from '@solidsync/
 import { SerialQueue } from './lib/queue'
 
 const SCHEMA = `
-PRAGMA user_version=2;
+PRAGMA user_version=3;
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  archived INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sections (
@@ -48,6 +49,18 @@ CREATE TABLE IF NOT EXISTS versions (
 CREATE INDEX IF NOT EXISTS idx_parts_section ON parts(section_id);
 CREATE INDEX IF NOT EXISTS idx_versions_part ON versions(part_id);
 `
+
+/**
+ * In-place migrations for databases created before a schema bump. CREATE TABLE
+ * IF NOT EXISTS leaves old tables alone, so new columns must be added here.
+ */
+function migrate(db: Database): void {
+  const info = db.exec('PRAGMA table_info(projects)')
+  const cols = info.length ? info[0].values.map((r) => String(r[1])) : []
+  if (!cols.includes('archived')) {
+    db.run('ALTER TABLE projects ADD COLUMN archived INTEGER NOT NULL DEFAULT 0')
+  }
+}
 
 function shortId(prefix = ''): string {
   return prefix + randomBytes(3).toString('hex')
@@ -118,6 +131,7 @@ export class OrgStore {
       db = new sql.Database()
     }
     db.run(SCHEMA)
+    migrate(db)
     const store = new OrgStore(db, orgName, rootDir)
     store.setMeta('org_name', orgName)
     await store.save()
@@ -236,7 +250,7 @@ export class OrgStore {
         })
         return { id: String(s.id), name: String(s.name), parts }
       })
-      return { id: String(p.id), name: String(p.name), sections }
+      return { id: String(p.id), name: String(p.name), archived: Number(p.archived) === 1, sections }
     })
     return { orgName: this.orgName, rev: this.getRev(), projects }
   }
@@ -390,6 +404,12 @@ export class OrgStore {
     this.run('UPDATE parts SET name=? WHERE id=?', [name, partId])
   }
 
+  rawArchiveProject(projectId: string, archived: boolean): void {
+    if (!this.get('SELECT id FROM projects WHERE id=?', [projectId]))
+      throw new Error('project not found')
+    this.run('UPDATE projects SET archived=? WHERE id=?', [archived ? 1 : 0, projectId])
+  }
+
   // ---- public convenience mutators --------------------------------------------
 
   createProject(name: string): Promise<string> {
@@ -432,6 +452,21 @@ export class OrgStore {
   setPartName(partId: string, name: string): Promise<void> {
     return this.enqueue(() => {
       this.rawSetPartName(partId, name)
+      return Promise.resolve()
+    })
+  }
+
+  /** Move a project out of the active list (stays fully browsable on the server). */
+  archiveProject(projectId: string): Promise<void> {
+    return this.enqueue(() => {
+      this.rawArchiveProject(projectId, true)
+      return Promise.resolve()
+    })
+  }
+
+  unarchiveProject(projectId: string): Promise<void> {
+    return this.enqueue(() => {
+      this.rawArchiveProject(projectId, false)
       return Promise.resolve()
     })
   }

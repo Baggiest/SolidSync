@@ -11,8 +11,7 @@ export const VOCAB = {
   outOfSync: 'Out of sync',
   syncing: 'Syncing',
   synced: 'Current',
-  offline: 'Offline',
-  ownCopy: 'Start my own copy'
+  offline: 'Offline'
 } as const
 
 export function clientTitle(sass: string): string {

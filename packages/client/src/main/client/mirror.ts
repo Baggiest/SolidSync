@@ -45,6 +45,21 @@ export class Mirror {
     return path.join(this.root, projectId)
   }
 
+  /** Project ids that exist in the local mirror (for pruning). */
+  async listProjects(): Promise<string[]> {
+    try {
+      const entries = await fsp.readdir(this.root, { withFileTypes: true })
+      return entries.filter((e) => e.isDirectory()).map((e) => e.name)
+    } catch {
+      return []
+    }
+  }
+
+  /** Drop a project's whole mirror folder (its server copy no longer exists). */
+  async removeProject(projectId: string): Promise<void> {
+    await fsp.rm(this.projectDir(projectId), { recursive: true, force: true })
+  }
+
   private indexPath(projectId: string): string {
     return path.join(this.projectDir(projectId), '.solidsync-mirror.json')
   }
