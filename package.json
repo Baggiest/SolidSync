@@ -1,6 +1,6 @@
 {
   "name": "solidsync-monorepo",
-  "version": "4.0.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Shop-floor part filer: one headless server, many Electron clients, on a local network.",
   "workspaces": [
