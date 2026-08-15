@@ -11,7 +11,7 @@ Problems:
 - Part Status: some parts are incomplete and shouldn't be worked upon, you can upload your file and set a label to show the status of that part, wether it's ready, ask first or avoid
 - PDM/PLM is too expensive 
 - OnShape is cloud-based and vendor-locked goyware
-SolidGit is kinda worse at everything they do, but you own everything, and it just works and it's FREE
+SolidSync is kinda worse at everything they do, but you own everything, and it just works and it's FREE
 
 
 No git required to use it. No login. No PDM seat.
