@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
-import type { ClientState, DownloadProgress, UploadProgress } from '@solidsync/shared'
+import type { ClientState, DownloadProgress, UpdateState, UploadProgress } from '@solidsync/shared'
+import { VERSION } from '@solidsync/shared'
 
 export const EMPTY_STATE: ClientState = {
   appConfig: { configured: false, name: '', serverIp: '', port: 1, useTls: false },
@@ -113,9 +114,36 @@ export function cancelDownload(versionId: string): void {
   void window.solidsync.cancelDownload(versionId)
 }
 
+// ---- client auto-update (About modal) --------------------------------------
+
+let update: UpdateState = { phase: 'idle', currentVersion: VERSION }
+const updateListeners = new Set<() => void>()
+
+export function getUpdateState(): UpdateState {
+  return update
+}
+
+function setUpdateState(next: UpdateState): void {
+  update = next
+  for (const fn of updateListeners) fn()
+}
+
+export function useUpdateState(): UpdateState {
+  return useSyncExternalStore(
+    (cb) => {
+      updateListeners.add(cb)
+      return () => {
+        updateListeners.delete(cb)
+      }
+    },
+    getUpdateState
+  )
+}
+
 /** Wire the store to the preload bridge. Returns an unsubscribe fn. */
 export function initStore(): () => void {
   window.solidsync.getState().then(setClientState).catch(() => undefined)
+  window.solidsync.getUpdateState().then(setUpdateState).catch(() => undefined)
   const offState = window.solidsync.subscribe(setClientState)
   const offUpload = window.solidsync.onUploadProgress(setUploadProgress)
   const offDownload = window.solidsync.onDownloadProgress((p) => {
@@ -125,10 +153,12 @@ export function initStore(): () => void {
     }
     setDownloads({ ...getDownloads(), [p.versionId]: p })
   })
+  const offUpdate = window.solidsync.onUpdateState(setUpdateState)
   return () => {
     offState()
     offUpload()
     offDownload()
+    offUpdate()
   }
 }
 

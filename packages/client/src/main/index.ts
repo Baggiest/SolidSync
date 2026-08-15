@@ -4,7 +4,8 @@ import iconPath from '../../build/icon.png?asset'
 import { ConfigStore } from './config'
 import { Session } from './session'
 import { TlsTrust, fetchServerCa } from './tls'
-import type { AppConfig, ClientState, DownloadProgress, HostPreset, UploadProgress, WorkStatus } from '@solidsync/shared'
+import { checkForUpdate, downloadUpdate, getUpdateState, initUpdater, installUpdate, subscribeUpdater } from './updater'
+import type { AppConfig, ClientState, DownloadProgress, HostPreset, UpdateState, UploadProgress, WorkStatus } from '@solidsync/shared'
 import { DEFAULT_PORT } from '@solidsync/shared'
 import { DownloadCancelledError } from './client/sync'
 
@@ -104,6 +105,12 @@ function pushDownloadProgress(p: DownloadProgress): void {
   }
 }
 
+function pushUpdate(s: UpdateState): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('app:update', s)
+  }
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     title: 'SolidSync',
@@ -168,6 +175,27 @@ ipcMain.handle('app:openExternal', async (_e, url: string) => {
   const target = String(url ?? '')
   if (!/^https?:\/\//.test(target)) throw new Error('only http(s) links can be opened')
   await shell.openExternal(target)
+})
+
+// ---- client auto-update (About modal) --------------------------------------
+
+ipcMain.handle('update:state', () => getUpdateState())
+
+ipcMain.handle('update:check', async () => {
+  const s = await checkForUpdate()
+  pushUpdate(s)
+  return s
+})
+
+ipcMain.handle('update:download', async () => {
+  const s = await downloadUpdate()
+  pushUpdate(s)
+  return s
+})
+
+ipcMain.handle('update:install', () => {
+  installUpdate()
+  return true
 })
 
 ipcMain.handle('onboarding:save', async (_e, cfg: AppConfig) => {
@@ -400,6 +428,8 @@ if (!gotLock) {
 
   void app.whenReady().then(async () => {
     createWindow()
+    initUpdater()
+    subscribeUpdater(pushUpdate)
     await boot()
     session.sync?.subscribe(() => pushState())
   })

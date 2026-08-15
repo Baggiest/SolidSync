@@ -42,5 +42,6 @@ linux:
   description: SolidSync syncs your files across the shop floor.
 
 publish:
-  - provider: generic
-    url: https://example.com/solidsync/ # placeholder, replace when you have a host
+  - provider: github
+    owner: baggiest
+    repo: solidsync

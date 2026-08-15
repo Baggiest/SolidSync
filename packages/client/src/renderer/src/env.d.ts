@@ -1,4 +1,4 @@
-import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, UpdateState, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 declare global {
   interface Window {
@@ -15,6 +15,11 @@ declare global {
       tlsClear: () => Promise<boolean>
       tlsStatus: () => Promise<{ trusted: boolean; fingerprint: string | null }>
       openExternal: (url: string) => Promise<void>
+      getUpdateState: () => Promise<UpdateState>
+      checkForUpdate: () => Promise<UpdateState>
+      downloadUpdate: () => Promise<UpdateState>
+      installUpdate: () => Promise<unknown>
+      onUpdateState: (cb: (s: UpdateState) => void) => () => void
       createProject: (name: string) => Promise<unknown>
       createSection: (projectId: string, name: string) => Promise<unknown>
       archiveProject: (projectId: string) => Promise<unknown>

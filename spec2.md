@@ -159,6 +159,10 @@ All flags also settable via env: `SOLIDGIT_DIR`, `SOLIDGIT_PORT`,
   in `api.ts`), with byte-count progress and an abort signal backing the
   Download / Cancel buttons; `ClientState` carries the set of version ids
   present on the local drive (`downloaded`).
+- **Client auto-update** (About modal → Update button) checks the latest
+  GitHub release via electron-updater and installs it in-app (download
+  progress + restart-to-install). The server has no update button — it is
+  updated by re-running the bundle, not from the GUI.
 
 ## 7. Shared package
 
@@ -188,4 +192,5 @@ engine); client machines never need git.
 ## 10. Out of scope for this pass
 
 Auth/HTTPS, multi-org federation, Docker packaging (easy to add later —
-the server is just a Node process), auto-update.
+the server is just a Node process). Client auto-update ships via GitHub
+Releases (electron-updater) — see `RELEASE.md` for the exact upload recipe.

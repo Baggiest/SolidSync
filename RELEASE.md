@@ -54,9 +54,33 @@ npm run build:server  # esbuild → packages/server/dist
 |------|------|
 | Linux installer | `packages/client/dist/SolidSync-<ver>-amd64.deb` |
 | Windows installer (NSIS) | `packages/client/dist/SolidSync-<ver>-x64.exe` |
+| Windows installer blockmap | `packages/client/dist/SolidSync-<ver>-x64.exe.blockmap` |
 | Windows portable | `packages/client/dist/SolidSync-<ver>-x64-portable.zip` |
-| Auto-update manifest | `packages/client/dist/latest-linux.yml` |
+| Auto-update manifest | `packages/client/dist/latest.yml` |
+| Auto-update manifest (Linux) | `packages/client/dist/latest-linux.yml` |
 | Server (run anywhere) | `packages/server/dist/` → `cli.js` + `sql-wasm.wasm` |
+
+## 6. Publish the GitHub release
+
+The client auto-update checks GitHub Releases for `baggiest/solidsync`. For the
+in-app **Update** button to work, the release **must** carry the update
+manifests alongside the installers — the button reads `latest.yml` /
+`latest-linux.yml` to find the new build.
+
+1. Create a release tagged `vX.Y.Z` (the tag should match the version bumped in
+   step 1 — no `v` prefix works too, but keep it consistent).
+2. Upload every file that `npm run ship:all` collected into `./release/`:
+   - `SolidSync-<ver>-x64.exe` **and** its `.blockmap` (enables differential
+     downloads)
+   - `SolidSync-<ver>-x64-portable.zip`
+   - `SolidSync-<ver>-amd64.deb`
+   - `latest.yml` and `latest-linux.yml`
+   - the `solidsync-server-<ver>/` folder (server bundle)
+3. Publish the release (mark as pre-release only if it genuinely isn't ready —
+   the update button ignores pre-releases by default).
+
+Clients only pull the new build when they click **Update** in About; nothing is
+pushed automatically.
 
 ## Verify
 

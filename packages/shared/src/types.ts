@@ -113,6 +113,28 @@ export interface DownloadProgress {
   done: boolean
 }
 
+// State of the client auto-update flow, driven by the main process. Phase is
+// the single source of truth for what the About modal shows.
+export type UpdatePhase =
+  | 'idle'
+  | 'checking'
+  | 'current'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'not-packaged'
+  | 'error'
+
+export interface UpdateState {
+  phase: UpdatePhase
+  currentVersion: string
+  // version of the newer build offered to the person, once known
+  availableVersion?: string
+  // download progress (0-100) while phase === 'downloading'
+  percent?: number
+  error?: string
+}
+
 export interface ClientState {
   appConfig: AppConfig
   connection: ConnectionState

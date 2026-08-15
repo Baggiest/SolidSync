@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { AppConfig, ClientState, DownloadProgress, UploadProgress, WorkStatus } from '@solidsync/shared'
+import type { AppConfig, ClientState, DownloadProgress, UpdateState, UploadProgress, WorkStatus } from '@solidsync/shared'
 
 const api = {
   // state
@@ -46,6 +46,19 @@ const api = {
 
   // misc
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('app:openExternal', url),
+
+  // client auto-update (About modal)
+  getUpdateState: (): Promise<UpdateState> => ipcRenderer.invoke('update:state'),
+  checkForUpdate: (): Promise<UpdateState> => ipcRenderer.invoke('update:check'),
+  downloadUpdate: (): Promise<UpdateState> => ipcRenderer.invoke('update:download'),
+  installUpdate: (): Promise<unknown> => ipcRenderer.invoke('update:install'),
+  onUpdateState: (cb: (s: UpdateState) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, s: UpdateState): void => cb(s)
+    ipcRenderer.on('app:update', listener)
+    return () => {
+      ipcRenderer.removeListener('app:update', listener)
+    }
+  },
 
   // actions
   createProject: (name: string): Promise<unknown> => ipcRenderer.invoke('action:createProject', name),

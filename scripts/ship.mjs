@@ -46,6 +46,7 @@ const distFiles = await readdir(clientDist)
 const artifactPatterns = [
   /^SolidSync-\d+\.\d+\.\d+-amd64\.deb$/,
   /^SolidSync-\d+\.\d+\.\d+-x64\.exe$/,
+  /^SolidSync-\d+\.\d+\.\d+-x64\.exe\.blockmap$/,
   /^SolidSync-\d+\.\d+\.\d+-x64-portable\.zip$/,
   /^latest(?:-linux)?\.yml$/
 ]
