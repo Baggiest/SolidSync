@@ -1,6 +1,6 @@
 {
   "name": "@solidsync/client",
-  "version": "0.3.0",
+  "version": "4.0.0",
   "description": "SolidSync GUI: syncs your files, thats it, takes 5 mins to set up",
   "author": "Pyrobotics",
   "homepage": "https://github.com/baggiest/solidsync",

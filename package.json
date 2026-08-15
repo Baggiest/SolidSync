@@ -1,6 +1,6 @@
 {
   "name": "solidsync-monorepo",
-  "version": "0.3.0",
+  "version": "4.0.0",
   "private": true,
   "description": "Shop-floor part filer: one headless server, many Electron clients, on a local network.",
   "workspaces": [
@@ -16,7 +16,8 @@
     "bump": "node scripts/bump.mjs",
     "pack:win": "npm run pack:win --workspace @solidsync/client",
     "build:win": "npm run build:win --workspace @solidsync/client",
-    "build:linux": "npm run build:linux --workspace @solidsync/client"
+    "build:linux": "npm run build:linux --workspace @solidsync/client",
+    "ship:all": "node scripts/ship.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

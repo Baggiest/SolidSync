@@ -1,6 +1,6 @@
 {
   "name": "solidsync",
-  "version": "0.3.0",
+  "version": "4.0.0",
   "description": "Headless SolidSync shop server with a CLI: org DB, per-project git repos, REST API.",
   "type": "module",
   "bin": {
