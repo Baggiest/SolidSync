@@ -1,6 +1,6 @@
 # SolidSync
 
-<img src="public/solidsync-logo.png" alt="SolidSync logo" width="300" />
+<p align="center"><img src="public/solidsync-logo.png" alt="SolidSync logo" width="300" /></p>
 
 ## Quick start
 
@@ -40,7 +40,7 @@ Part 1 (`http://<LAN-IP>:3020`), then you're in.
 
  Working as the captain of University of Tehran Nacional Formula Student team our mechanical engineers used to sort and manage their parts manually using FOLDERS and directories like "/GearboxV2-21AUG" and there was no shared space or over the network solution, everything was being done like the stone age using USB's sometimes, and my first thought was there has got to be a selfhost offline FOSS solution for mechanical engineering projects like we have git for software, and they said no, and shit they were right.
 
-### Le Problems this project is trying to solve
+### Le Problems that pushed me into making this
 
 - Sanctions: Our team is in Iran and we are basically banned off every mainstream software solution. (I.E. Solidworks, Autodesk, etc.)
 - "WHERES THE HEAD": Days of work went on a part that wasnt the latest version of the hardware, And rebasing doesn't really exist in hardware like it does for software, SolidSync is set to address this problem at every level, parts have a version history and you always see the HEAD as the default
