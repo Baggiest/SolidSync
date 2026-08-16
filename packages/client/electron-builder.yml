@@ -1,6 +1,6 @@
-appId: com.pyrobotics.solidsync
+appId: com.maniesohi.solidsync
 productName: SolidSync
-copyright: Copyright © 2026 Pyrobotics
+copyright: Copyright © 2026 Mani E. Sohi
 electronVersion: 43.3.0
 
 directories:
@@ -34,8 +34,8 @@ linux:
   artifactName: ${productName}-${version}-${arch}.${ext}
   icon: build/icon.png
   category: Utility
-  maintainer: Pyrobotics
-  vendor: Pyrobotics
+  maintainer: Mani E. Sohi
+  vendor: Mani E. Sohi
   executableName: solidsync
   syncDesktopName: true
   synopsis: Shop-floor part filer
