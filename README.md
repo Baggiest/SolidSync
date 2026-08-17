@@ -2,7 +2,7 @@
 
 <p align="center"><img src="public/solidsync-logo.png" alt="SolidSync logo" width="300" /></p>
 
-### How did we get here
+## How did we get here
 
  Working as the captain of University of Tehran Nacional Formula Student team our mechanical engineers used to sort and manage their parts manually using FOLDERS and directories like "/GearboxV2-21AUG" and there was no shared space or over the network solution, everything was being done like the stone age using USB's sometimes, and my first thought was there has got to be a selfhost offline FOSS solution for mechanical engineering projects like we have git for software, and they said no, and shit they were right.
 
